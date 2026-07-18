@@ -2,6 +2,7 @@ import { auth, signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { createHabit } from "@/app/actions";
 import { HabitTodayToggle } from "@/components/habit-today-toggle";
+import { HabitGrid } from "@/components/habit-grid";
 
 export default async function Home() {
   const session = await auth();
@@ -22,6 +23,10 @@ export default async function Home() {
     orderBy: { createdAt: "desc" },
     include: { entries: true },
   });
+
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
 
   return (
     <main style={{ padding: 40, maxWidth: 480 }}>
@@ -44,16 +49,19 @@ export default async function Home() {
       </form>
 
       <h2>Tus hábitos</h2>
-      <ul>
-        {habits.map((h) => (
-          <li key={h.id} style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <span style={{ flex: 1 }}>{h.name} — {h.type}</span>
-            <HabitTodayToggle
-              habitId={h.id}
-              entryDates={h.entries.map((e) => e.date.toISOString().slice(0, 10))}
-            />
-          </li>
-        ))}
+      <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 20 }}>
+        {habits.map((h) => {
+          const entryDates = h.entries.map((e) => e.date.toISOString().slice(0, 10));
+          return (
+            <li key={h.id}>
+              <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8 }}>
+                <span style={{ flex: 1 }}>{h.name} — {h.type} </span>
+                <HabitTodayToggle habitId={h.id} entryDates={entryDates} />
+              </div>
+              <HabitGrid habitId={h.id} year={year} month={month} entryDates={entryDates} />
+            </li>
+          );
+        })}
       </ul>
     </main>
   );
