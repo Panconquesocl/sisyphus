@@ -1,6 +1,7 @@
 import { auth, signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { createHabit } from "@/app/actions";
+import { HabitTodayToggle } from "@/components/habit-today-toggle";
 
 export default async function Home() {
   const session = await auth();
@@ -19,6 +20,7 @@ export default async function Home() {
   const habits = await prisma.habit.findMany({
     where: { user: { email: session.user.email! } },
     orderBy: { createdAt: "desc" },
+    include: { entries: true },
   });
 
   return (
@@ -44,7 +46,13 @@ export default async function Home() {
       <h2>Tus hábitos</h2>
       <ul>
         {habits.map((h) => (
-          <li key={h.id}>{h.name} — {h.type}</li>
+          <li key={h.id} style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <span style={{ flex: 1 }}>{h.name} — {h.type}</span>
+            <HabitTodayToggle
+              habitId={h.id}
+              entryDates={h.entries.map((e) => e.date.toISOString().slice(0, 10))}
+            />
+          </li>
         ))}
       </ul>
     </main>
