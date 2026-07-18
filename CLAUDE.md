@@ -1,10 +1,10 @@
-# CLAUDE.md — Habitrack
+# CLAUDE.md — Sisyphus
 
 Guía para trabajar en este proyecto. Léela al inicio de cada sesión.
 
 ## Qué es
 
-**Habitrack** (nombre provisional) es una app web para seguir el estado de hábitos y
+**Sisyphus** es una app web para seguir el estado de hábitos y
 rutinas. La feature central es una **grilla mensual estilo "contributions" de GitHub**:
 un heatmap donde cada celda es un día y la intensidad del color refleja el cumplimiento
 del hábito ese día.
@@ -38,25 +38,32 @@ Este proyecto se construye en **pair programming, cero vibecoding**. El usuario 
 | Validación  | Zod                               |
 | Deploy      | Vercel                            |
 
-## Modelo de datos (objetivo)
+## Modelo de datos (implementado — migración `init`)
 
 ```
-User        1─┐
-              └─< Habit        (name, color, icon, type, target, unit, archived)
-                    1─┐
-                      └─< HabitEntry  (date, value, note)   @@unique([habitId, date])
+User ─┬─< Habit ──< HabitEntry   (date @db.Date, value Int, @@unique([habitId, date]))
+      └─< DayNote                 (date @db.Date, content, @@unique([userId, date]))
 ```
+Más los modelos que exige Auth.js: `Account`, `Session`, `VerificationToken`.
 
-- `Habit.type`: `BINARY` (hecho/no), `QUANTITY` (ej. 8 vasos), `DURATION` (ej. 30 min).
-- La intensidad de color de la grilla = `value` relativo a `target`.
-- `HabitEntry.date` es un **día** (sin hora). Guardar como fecha en la **zona horaria del
-  usuario**, no UTC crudo — ver nota de timezones abajo.
+- `Habit`: name, type, unit?, target?, color, icon?, order, `archivedAt` (soft-archive), timestamps.
+- `Habit.type` (enum `HabitType`): `BINARY` (hecho/no) / `QUANTITY` (ej. 8 vasos) / `DURATION` (ej. 30 min).
+- `HabitEntry.value` es **`Int`** (enteros; para decimales, usar una unidad más fina). Intensidad de color = `value` vs `target`.
+- **La nota es del DÍA, no del hábito**: `DayNote`, una por (usuario, día). Se edita en la vista «Hoy».
+- Los campos `date` usan `@db.Date` (solo día, sin hora) — ver timezones abajo.
 
 ### Timezones (decisión técnica clave)
 
 El "día" de un hábito depende de dónde está el usuario. Guardar `date` como el día local
 del usuario (columna `@db.Date`) evita que un check a las 11pm salte al día siguiente en
 UTC. Este es un buen tema para el README.
+
+### Prisma 7 (notas clave)
+
+- La conexión NO va en `schema.prisma` sino en `prisma.config.ts` (usa `DIRECT_URL`, la directa, para migraciones).
+- El cliente se genera en `src/generated/prisma/` (gitignored). Import: `@/generated/prisma/client`.
+- El runtime necesita un **driver adapter**: en `src/lib/prisma.ts`, `new PrismaClient({ adapter: new PrismaNeon({ connectionString: DATABASE_URL }) })` (patrón singleton). `DATABASE_URL` = pooled (app); `DIRECT_URL` = directa (migraciones).
+- `postinstall: prisma generate` para que Vercel regenere el cliente en cada deploy.
 
 ## Convenciones
 
@@ -68,16 +75,17 @@ UTC. Este es un buen tema para el README.
 
 ## Comandos
 
-> Se irán completando a medida que montemos el proyecto.
-
 ```bash
-# pnpm dev            # servidor de desarrollo (pendiente de setup)
-# pnpm build          # build de producción
-# pnpm lint           # linter
-# npx prisma studio   # explorar la DB
-# npx prisma migrate dev  # aplicar migraciones en desarrollo
+pnpm dev                            # servidor de desarrollo (localhost:3000)
+pnpm build                          # build de producción
+pnpm lint                           # linter
+pnpm prisma generate                # regenera el cliente (src/generated/prisma)
+pnpm prisma migrate dev --name <n>  # crea y aplica una migración en desarrollo
+pnpm prisma studio                  # explorador visual de la DB
 ```
 
 ## Estado actual
 
-Fase 0 — planificación. Ver `docs/PLAN.md` para el roadmap por fases.
+**Fase 1 en curso.** Hecho: modelo de datos + migración `init` (7 tablas en Neon),
+cliente Prisma con adapter de Neon (verificado con éxito), deploy en Vercel con CI/CD.
+Siguiente: **Auth.js con Google**. Ver `docs/PLAN.md` para el roadmap por fases.
