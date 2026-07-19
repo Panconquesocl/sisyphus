@@ -1,18 +1,22 @@
-import { buildMonthGrid } from "@/lib/grid";
+import { buildMonthGrid, type HabitType } from "@/lib/grid";
 import { GridCell } from "@/components/grid-cell";
 
 export function HabitGrid({
   habitId,
   year,
   month,
-  entryDates,
+  type,
+  target,
+  valuesByDate,
 }: {
   habitId: string;
   year: number;
   month: number;
-  entryDates: string[];
+  type: HabitType;
+  target: number | null;
+  valuesByDate: Map<string, number>;
 }) {
-  const cells = buildMonthGrid(year, month, new Set(entryDates));
+  const cells = buildMonthGrid(year, month, valuesByDate);
 
   return (
     <div
@@ -26,10 +30,17 @@ export function HabitGrid({
     >
       {cells.map((cell, i) =>
         cell ? (
-          <GridCell key={i} habitId={habitId} date={cell.date} done={cell.done} />
+          <GridCell
+            key={i}
+            habitId={habitId}
+            date={cell.date}
+            value={cell.value}
+            type={type}
+            target={target}
+          />
         ) : (
           <div key={i} style={{ width: 14, height: 14 }} />
-        )
+        ),
       )}
     </div>
   );

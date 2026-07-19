@@ -1,25 +1,45 @@
 "use client";
 
-import { toggleEntry } from "@/app/actions";
+import { toggleEntry, setEntry } from "@/app/actions";
+import { intensityLevel, LEVEL_COLORS, type HabitType } from "@/lib/grid";
 import { useTransition } from "react";
 
 export function GridCell({
   habitId,
   date,
-  done,
+  value,
+  type,
+  target,
 }: {
   habitId: string;
   date: string;
-  done: boolean;
+  value: number | null;
+  type: HabitType;
+  target: number | null;
 }) {
   const [isPending, startTransition] = useTransition();
+  const level = intensityLevel(value, type, target);
+
+  function handleClick() {
+    if (type === "BINARY") {
+      startTransition(() => toggleEntry(habitId, date));
+    } else {
+      const input = window.prompt(`${date} — ¿cuánto? (vacío = borrar)`, value ? String(value) : "");
+      if (input === null) return; // canceló
+      const n = input.trim() === "" ? 0 : Number(input);
+      if (Number.isNaN(n) || n < 0) return;
+      startTransition(() => setEntry(habitId, date, n));
+    }
+  }
+
+  const title = value ? `${date}: ${value}` : date;
 
   return (
     <button
       type="button"
-      title={date}
-      aria-label={`${date}${done ? " (hecho)" : ""}`}
-      onClick={() => startTransition(() => toggleEntry(habitId, date))}
+      title={title}
+      aria-label={title}
+      onClick={handleClick}
       disabled={isPending}
       style={{
         width: 14,
@@ -28,7 +48,7 @@ export function GridCell({
         border: "none",
         borderRadius: 3,
         cursor: "pointer",
-        background: done ? "#3f7a34" : "#e5e7eb",
+        background: LEVEL_COLORS[level],
         opacity: isPending ? 0.5 : 1,
       }}
     />
