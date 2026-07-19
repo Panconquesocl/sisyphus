@@ -37,4 +37,10 @@ export function intensityLevel(
   return 4;
 }
 
-export const LEVEL_COLORS = ["#e5e7eb", "#c6e48b", "#7bc96f", "#49a340", "#2e7d32"];
+export const LEVEL_COLORS = [
+  "var(--heat-0)",
+  "var(--heat-1)",
+  "var(--heat-2)",
+  "var(--heat-3)",
+  "var(--heat-4)",
+];

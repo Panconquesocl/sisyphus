@@ -1,10 +1,11 @@
 "use client";
 
 import { toggleEntry } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 import { useEffect, useState, useTransition } from "react";
 
 function localToday() {
-  return new Date().toLocaleDateString("en-CA"); // "YYYY-MM-DD" en la zona del navegador
+  return new Date().toLocaleDateString("en-CA");
 }
 
 export function HabitTodayToggle({
@@ -22,11 +23,14 @@ export function HabitTodayToggle({
   const doneToday = today ? entryDates.includes(today) : false;
 
   return (
-    <button
+    <Button
+      type="button"
+      size="sm"
+      variant={doneToday ? "default" : "outline"}
       onClick={() => today && startTransition(() => toggleEntry(habitId, today))}
       disabled={isPending || !today}
->
+    >
       {doneToday ? "✓ Hecho hoy" : "Marcar hoy"}
-    </button>
+    </Button>
   );
 }
