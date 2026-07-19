@@ -1,6 +1,6 @@
 import { auth, signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { createHabit } from "@/app/actions";
+import { HabitForm } from "@/components/habit-form";
 import { HabitTodayToggle } from "@/components/habit-today-toggle";
 import { HabitGrid } from "@/components/habit-grid";
 
@@ -38,27 +38,34 @@ export default async function Home() {
       </div>
 
       <h2>Nuevo hábito</h2>
-      <form action={createHabit} style={{ display: "flex", gap: 8 }}>
-        <input name="name" placeholder="Ej. Meditar" required />
-        <select name="type" defaultValue="BINARY">
-          <option value="BINARY">Binario</option>
-          <option value="QUANTITY">Cantidad</option>
-          <option value="DURATION">Duración</option>
-        </select>
-        <button type="submit">Crear</button>
-      </form>
+      <HabitForm />
 
       <h2>Tus hábitos</h2>
       <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 20 }}>
         {habits.map((h) => {
-          const entryDates = h.entries.map((e) => e.date.toISOString().slice(0, 10));
+          const valuesByDate = new Map(
+            h.entries.map((e) => [e.date.toISOString().slice(0, 10), e.value] as const),
+          );
+          const entryDates = [...valuesByDate.keys()];
           return (
             <li key={h.id}>
               <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 8 }}>
-                <span style={{ flex: 1 }}>{h.name} — {h.type} </span>
-                <HabitTodayToggle habitId={h.id} entryDates={entryDates} />
+                <span style={{ flex: 1 }}>
+                  {h.name} — {h.type}
+                  {h.target ? ` · meta ${h.target}${h.unit ? " " + h.unit : ""}` : ""}
+                </span>
+                {h.type === "BINARY" && (
+                  <HabitTodayToggle habitId={h.id} entryDates={entryDates} />
+                )}
               </div>
-              <HabitGrid habitId={h.id} year={year} month={month} entryDates={entryDates} />
+              <HabitGrid
+                habitId={h.id}
+                year={year}
+                month={month}
+                type={h.type}
+                target={h.target}
+                valuesByDate={valuesByDate}
+              />
             </li>
           );
         })}
