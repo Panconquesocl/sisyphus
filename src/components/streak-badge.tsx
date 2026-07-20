@@ -2,11 +2,7 @@
 
 import { computeStreak } from "@/lib/streaks";
 import type { HabitType } from "@/lib/grid";
-import { useEffect, useState } from "react";
-
-function localToday() {
-  return new Date().toLocaleDateString("en-CA");
-}
+import { useLocalToday } from "@/lib/use-local-today";
 
 export function StreakBadge({
   entries,
@@ -17,8 +13,7 @@ export function StreakBadge({
   type: HabitType;
   target: number | null;
 }) {
-  const [today, setToday] = useState<string | null>(null);
-  useEffect(() => setToday(localToday()), []);
+  const today = useLocalToday();
 
   if (!today) return null;
 
