@@ -109,3 +109,19 @@ export async function setEntry(habitId: string, date: string, value: number) {
 
   revalidatePath("/");
 }
+
+export async function setHabitArchived(habitId: string, archived: boolean) {
+  const user = await requireUser();
+
+  const habit = await prisma.habit.findFirst({
+    where: { id: habitId, userId: user.id },
+  });
+  if (!habit) throw new Error("Hábito no encontrado");
+
+  await prisma.habit.update({
+    where: { id: habitId },
+    data: { archivedAt: archived ? new Date() : null },
+  });
+
+  revalidatePath("/");
+}

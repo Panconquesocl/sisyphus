@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { StreakBadge } from "@/components/streak-badge";
+import { ArchiveButton } from "@/components/archive-button";
 
 export default async function Home() {
   const session = await auth();
@@ -28,9 +29,14 @@ export default async function Home() {
   }
 
   const habits = await prisma.habit.findMany({
-    where: { user: { email: session.user.email! } },
+    where: { user: { email: session.user.email! }, archivedAt: null },
     orderBy: { createdAt: "desc" },
     include: { entries: true },
+  });
+
+  const archivedHabits = await prisma.habit.findMany({
+    where: { user: { email: session.user.email! }, archivedAt: { not: null } },
+    orderBy: { archivedAt: "desc" },
   });
 
   const now = new Date();
@@ -81,8 +87,8 @@ export default async function Home() {
                     ) : null}
                   </span>
                   <StreakBadge entries={[...valuesByDate]} type={h.type} target={h.target} />
-                  {h.type === "BINARY" && (
-                    <HabitTodayToggle habitId={h.id} entryDates={entryDates} />
+                  <ArchiveButton habitId={h.id} archived={false} />                  {h.type === "BINARY" && (
+                  <HabitTodayToggle habitId={h.id} entryDates={entryDates} />
                   )}
                 </div>
                  <HabitGrid
@@ -103,6 +109,23 @@ export default async function Home() {
             </p>
           )}
         </div>
+        {archivedHabits.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Archivados
+          </h2>
+          <div className="flex flex-col gap-2">
+            {archivedHabits.map((h) => (
+              <div
+                key={h.id}
+                className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm text-muted-foreground">
+                <span className="flex-1">{h.name}</span>
+                <ArchiveButton habitId={h.id} archived={true} />
+              </div>
+            ))}
+          </div>
+        </div>
+        )}
       </section>
     </main>
   );
