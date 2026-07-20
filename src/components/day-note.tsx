@@ -3,33 +3,25 @@
 import { setDayNote } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
-import { useEffect, useState, useTransition } from "react";
+import { useLocalToday } from "@/lib/use-local-today";
+import { useState, useTransition } from "react";
 
 export function DayNote({ notes }: { notes: [string, string][] }) {
-  const [today, setToday] = useState<string | null>(null);
-  const [content, setContent] = useState("");
-  const [saved, setSaved] = useState("");
+  const today = useLocalToday();
+  const [draft, setDraft] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    const t = new Date().toLocaleDateString("en-CA");
-    const initial = new Map(notes).get(t) ?? "";
-    setToday(t);
-    setContent(initial);
-    setSaved(initial);
-    // notes cambia de identidad en cada render del servidor; solo queremos
-    // inicializar una vez, al montar
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const dirty = content !== saved;
+  // Lo que el servidor tiene para el día local del usuario.
+  const saved = today ? new Map(notes).get(today) ?? "" : "";
+  // draft === null significa "el usuario no ha tocado nada": seguimos al servidor.
+  const content = draft ?? saved;
+  const dirty = draft !== null && draft !== saved;
 
   function handleSave() {
-    if (!today) return;
+    if (!today || draft === null) return;
     startTransition(async () => {
-      await setDayNote(today, content);
-      setSaved(content);
+      await setDayNote(today, draft);
+      setDraft(null); // soltamos el borrador y volvemos a seguir al servidor
     });
   }
 
@@ -37,7 +29,7 @@ export function DayNote({ notes }: { notes: [string, string][] }) {
     <div className="flex flex-col gap-2">
       <Textarea
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e) => setDraft(e.target.value)}
         placeholder="¿Cómo te fue hoy?"
         maxLength={1000}
         rows={3}

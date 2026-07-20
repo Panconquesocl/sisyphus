@@ -2,11 +2,8 @@
 
 import { toggleEntry } from "@/app/actions";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState, useTransition } from "react";
-
-function localToday() {
-  return new Date().toLocaleDateString("en-CA");
-}
+import {  useTransition } from "react";
+import { useLocalToday } from "@/lib/use-local-today";
 
 export function HabitTodayToggle({
   habitId,
@@ -15,10 +12,8 @@ export function HabitTodayToggle({
   habitId: string;
   entryDates: string[];
 }) {
-  const [today, setToday] = useState<string | null>(null);
+  const today = useLocalToday();
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => setToday(localToday()), []);
 
   const doneToday = today ? entryDates.includes(today) : false;
 
