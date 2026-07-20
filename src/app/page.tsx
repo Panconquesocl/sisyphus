@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { StreakBadge } from "@/components/streak-badge";
 import { ArchiveButton } from "@/components/archive-button";
 import { EditHabitDialog } from "@/components/edit-habit-dialog";
+import { DayNote } from "@/components/day-note";
 
 export default async function Home() {
   const session = await auth();
@@ -43,6 +44,18 @@ export default async function Home() {
   const now = new Date();
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth();
+  // El servidor no sabe en qué día está el usuario. Traemos ayer/hoy/mañana en UTC:
+  // esa ventana cubre cualquier zona horaria (de UTC-12 a UTC+14) y el cliente
+  // elige la que corresponde a su día local.
+  const DAY_MS = 86_400_000;
+  const utcToday = Date.UTC(year, month, now.getUTCDate());
+
+  const dayNotes = await prisma.dayNote.findMany({
+    where: {
+      user: { email: session.user.email! },
+      date: { gte: new Date(utcToday - DAY_MS), lte: new Date(utcToday + DAY_MS) },
+    },
+  });
 
   return (
     <main className="mx-auto max-w-2xl p-6 md:p-10">
@@ -50,6 +63,9 @@ export default async function Home() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Sisyphus</h1>
           <p className="text-sm text-muted-foreground">Hola, {session.user.name}</p>
+          {/* <p className="text-sm text-muted-foreground">
+          {now.toLocaleDateString('es-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p> */}
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -58,6 +74,12 @@ export default async function Home() {
           </form>
         </div>
       </header>
+      <section className="mb-8">
+      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+        Nota de hoy
+      </h2>
+      <DayNote notes={dayNotes.map((n) => [n.date.toISOString().slice(0, 10), n.content])} />
+      </section>
 
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
