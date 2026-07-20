@@ -10,6 +10,7 @@ import { StreakBadge } from "@/components/streak-badge";
 import { ArchiveButton } from "@/components/archive-button";
 import { EditHabitDialog } from "@/components/edit-habit-dialog";
 import { DayNote } from "@/components/day-note";
+import { requireUser } from "@/lib/auth-helpers";
 
 export default async function Home() {
   const session = await auth();
@@ -29,15 +30,16 @@ export default async function Home() {
       </main>
     );
   }
+  const user = await requireUser();
 
   const habits = await prisma.habit.findMany({
-    where: { user: { email: session.user.email! }, archivedAt: null },
+    where: { userId: user.id, archivedAt: null },
     orderBy: { createdAt: "desc" },
     include: { entries: true },
   });
 
   const archivedHabits = await prisma.habit.findMany({
-    where: { user: { email: session.user.email! }, archivedAt: { not: null } },
+    where: { userId: user.id, archivedAt: { not: null } },
     orderBy: { archivedAt: "desc" },
   });
 
@@ -52,7 +54,7 @@ export default async function Home() {
 
   const dayNotes = await prisma.dayNote.findMany({
     where: {
-      user: { email: session.user.email! },
+      userId: user.id,
       date: { gte: new Date(utcToday - DAY_MS), lte: new Date(utcToday + DAY_MS) },
     },
   });
