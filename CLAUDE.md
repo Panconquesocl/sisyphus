@@ -51,20 +51,27 @@ Más los modelos que exige Auth.js: `Account`, `Session`, `VerificationToken`.
 - `Habit.type` (enum `HabitType`): `BINARY` / `QUANTITY` (ej. 8 vasos) / `DURATION` (ej. 30 min).
   **El tipo es inmutable** al editar (los registros existentes se guardaron bajo su semántica).
 - `HabitEntry.value` es **`Int`** (para decimales, usar una unidad más fina: min en vez de horas).
-- **La nota es del DÍA, no del hábito**: `DayNote`, una por (usuario, día).
-  ⚠️ **Modelada pero AÚN NO construida** — pendiente, se editaría en la vista «Hoy».
+- **La nota es del DÍA, no del hábito**: `DayNote`, una por (usuario, día). Se edita en la
+  Home (sección «Nota de hoy»).
 
 ### Timezones (decisión técnica clave)
 
 El "día" de un hábito depende de **dónde está el usuario**, no del servidor (Vercel corre en UTC).
 Patrón usado en todo el proyecto:
 
-1. El **cliente** calcula su fecha local como `new Date().toLocaleDateString("en-CA")` → `"2026-07-20"`.
+1. El **cliente** obtiene su fecha local con el hook `useLocalToday()` → `"2026-07-20"`.
 2. El **servidor** la guarda con `new Date(\`${date}T00:00:00Z\`)` en la columna `@db.Date`.
 3. Al leer, se formatea de vuelta con `date.toISOString().slice(0, 10)`.
 
-Como el valor local depende del navegador, se calcula **dentro de `useEffect`** (no en el
-render) para evitar hydration mismatch entre SSR y cliente.
+Como el valor local depende del navegador, NO puede conocerse durante el SSR. El hook usa
+**`useSyncExternalStore`** (`getServerSnapshot` → `null`, `getSnapshot` → día local): declara
+la diferencia servidor/cliente como intención, evita el hydration mismatch y no dispara el
+lint `react-hooks/set-state-in-effect` (que sí saltaba con el viejo `useEffect` + `setState`).
+`useHydrated()` es el hook hermano para UI que depende del navegador sin ser una fecha
+(lo usa `theme-toggle` con next-themes). La función pura vive en `src/lib/dates.ts`.
+
+⚠️ Los Server Components que necesitan una fecha siguen usando el UTC del servidor
+(ver «Deuda técnica acordada»).
 
 ### Prisma 7 (notas clave)
 
@@ -121,7 +128,11 @@ src/
     auth-helpers.ts             requireUser()
     grid.ts                     buildMonthGrid, intensityLevel, LEVEL_COLORS
     streaks.ts                  dayLevel, computeStreak  (+ streaks.test.ts)
+    dates.ts                    localToday() — "YYYY-MM-DD" local vía locale en-CA
+    use-local-today.ts          hook: día local del usuario (null en SSR)
+    use-hydrated.ts             hook: false en SSR, true en el navegador
   components/
+    day-note.tsx                nota del día (textarea + guardar)
     habit-form.tsx              crear hábito (campos condicionales por tipo)
     habit-today-toggle.tsx      marcar hoy (solo binarios)
     habit-grid.tsx              grilla mensual (server) + etiquetas de días
@@ -134,7 +145,12 @@ src/
 ```
 
 Server Actions disponibles en `src/app/actions.ts`: `createHabit`, `updateHabit`,
-`setHabitArchived`, `toggleEntry` (binarios), `setEntry` (valores).
+`setHabitArchived`, `toggleEntry` (binarios), `setEntry` (valores), `setDayNote`
+(upsert por `userId_date`; contenido vacío borra la fila).
+
+**Estado del cliente: derivar, no copiar.** `day-note.tsx` es el ejemplo de referencia —
+guarda en estado solo el borrador del usuario (`draft`, `null` si no ha tocado nada) y deriva
+lo mostrado del prop del servidor. Nada de `useEffect` copiando props a estado.
 
 Colores del heatmap: variables CSS `--heat-0..4` en `globals.css` (`:root` y `.dark`),
 referenciadas desde `LEVEL_COLORS`.
@@ -145,19 +161,28 @@ referenciadas desde `LEVEL_COLORS`.
 pnpm dev                            # desarrollo (localhost:3000)
 pnpm build                          # build de producción
 pnpm lint                           # linter
+pnpm typecheck                      # tsc --noEmit
 pnpm test                           # tests (Vitest)
 pnpm prisma generate                # regenera el cliente (src/generated/prisma)
 pnpm prisma migrate dev --name <n>  # crea y aplica una migración
 pnpm prisma studio                  # explorador visual de la DB
 ```
 
+## CI
+
+`.github/workflows/ci.yml` corre **lint + typecheck + tests** en cada PR y push a `main`.
+Gotcha: `pnpm install` dispara el `postinstall` (`prisma generate`), que carga
+`prisma.config.ts` y exige `DIRECT_URL`. El workflow define una URL **falsa** — `generate`
+solo lee el schema, no conecta. Nunca poner ahí la real (los logs son públicos).
+`pnpm/action-setup` debe ir **antes** de `setup-node`, o el `cache: pnpm` no encuentra el store.
+
 ## Estado actual (2026-07-20)
 
 **Fase 1 completa + extras.** Funcionando de punta a punta:
 auth con Google · CRUD completo de hábitos (crear, listar, editar, archivar/restaurar) ·
 3 tipos con meta y unidad · registro diario y retroactivo · grilla mensual con intensidad
-por cumplimiento · rachas suave/perfecta con tests · modo oscuro · diseño con shadcn ·
-deploy con CI/CD y login funcionando en producción.
+por cumplimiento · rachas suave/perfecta con tests · notas del día · modo oscuro ·
+diseño con shadcn · deploy con CI/CD y login funcionando en producción.
 
 **Pendientes** (por orden sugerido):
 1. **Vista anual** (toggle Mes/Año) y **página de detalle** por hábito (rutas dinámicas).
