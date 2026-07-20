@@ -165,3 +165,30 @@ export async function updateHabit(formData: FormData) {
 
   revalidatePath("/");
 }
+
+const SetDayNoteSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida"),
+  content: z.string().trim().max(1000, "La nota es demasiado larga"),
+});
+
+export async function setDayNote(date: string, content: string) {
+  const user = await requireUser();
+
+  const parsed = SetDayNoteSchema.safeParse({ date, content });
+  if (!parsed.success) throw new Error(parsed.error.issues[0].message);
+
+  const day = new Date(`${parsed.data.date}T00:00:00Z`);
+  const text = parsed.data.content;
+
+  if (text.length === 0) {
+    await prisma.dayNote.deleteMany({ where: { userId: user.id, date: day } });
+  } else {
+    await prisma.dayNote.upsert({
+      where: { userId_date: { userId: user.id, date: day } },
+      create: { userId: user.id, date: day, content: text },
+      update: { content: text },
+    });
+  }
+
+  revalidatePath("/");
+}

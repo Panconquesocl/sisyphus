@@ -160,12 +160,34 @@ por cumplimiento · rachas suave/perfecta con tests · modo oscuro · diseño co
 deploy con CI/CD y login funcionando en producción.
 
 **Pendientes** (por orden sugerido):
-1. **Notas del día** (`DayNote`) — modelada pero sin construir.
-2. **Vista anual** (toggle Mes/Año) y **página de detalle** por hábito (rutas dinámicas).
-3. Racha máxima histórica + % de cumplimiento.
-4. Impedir marcar **días futuros** (requiere el "hoy" local del cliente).
-5. Pulido de portafolio: README con capturas y decisiones técnicas, estados de error/carga,
+1. **Vista anual** (toggle Mes/Año) y **página de detalle** por hábito (rutas dinámicas).
+2. Racha máxima histórica + % de cumplimiento.
+3. Impedir marcar **días futuros** (requiere el "hoy" local del cliente).
+4. Pulido de portafolio: README con capturas y decisiones técnicas, estados de error/carga,
    responsive y accesibilidad.
+
+### Deuda técnica acordada (2026-07-20)
+
+**a) Zona horaria en el modelo `User`.** Hoy el "día" lo resuelve el cliente en `useEffect`
+(patrón repetido ya en `habit-today-toggle`, `day-note` y `grid-cell`), y los Server
+Components que necesitan una fecha usan el UTC del servidor — p. ej. `year`/`month` de la
+grilla en `page.tsx`, que muestra el mes equivocado a fin de mes en zonas negativas.
+
+Solución acordada: campo `timezone String?` en `User` (IANA, capturado en el primer login con
+`Intl.DateTimeFormat().resolvedOptions().timeZone`) y hacer la matemática de fechas en el
+servidor con esa zona. Desbloquea features server-side (% de cumplimiento, rachas
+server-side, resúmenes, recordatorios). **Hacerlo al construir la vista anual / página de
+detalle**, que es donde el problema deja de ser cosmético; retrofitearlo se encarece con cada
+componente nuevo que resuelva el día en el cliente. Al hacerlo, extraer `localToday()`
+(el truco `toLocaleDateString("en-CA")` → `YYYY-MM-DD`) a `src/lib/dates.ts`.
+
+**b) Refactor `email` → `userId` en las queries.** `page.tsx` filtra con
+`user: { email: session.user.email! }`. Problemas: hace un JOIN innecesario, ata las queries a
+un campo mutable, y sobre todo `email` es `String?` en el schema — si llegara `undefined`,
+Prisma **ignora el filtro** (`undefined` = "sin filtro", distinto de `null`) y la query
+devolvería los hábitos de todos los usuarios. El `!` solo calla a TypeScript, no valida en
+runtime. Solución: usar `requireUser()` en `page.tsx` y filtrar por `userId: user.id`.
+**En su propio commit**, sin mezclar con una feature.
 
 Referencia visual: wireframes low-fi en
 https://claude.ai/code/artifact/ed9dbc47-3908-4a02-8bb7-072c50948a25
