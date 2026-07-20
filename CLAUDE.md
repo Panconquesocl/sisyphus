@@ -134,10 +134,12 @@ src/
     auth-helpers.ts             requireUser()
     grid.ts                     buildMonthGrid, intensityLevel, LEVEL_COLORS
     streaks.ts                  dayLevel, computeStreak  (+ streaks.test.ts)
-    dates.ts                    localToday() — "YYYY-MM-DD" local vía locale en-CA
+    dates.ts                    localToday() (cliente) + dayInTimeZone/monthInTimeZone/
+                                isValidTimeZone (servidor)  (+ dates.test.ts)
     use-local-today.ts          hook: día local del usuario (null en SSR)
     use-hydrated.ts             hook: false en SSR, true en el navegador
   components/
+    timezone-sync.tsx           reporta la zona del navegador (no renderiza nada)
     day-note.tsx                nota del día (textarea + guardar)
     habit-form.tsx              crear hábito (campos condicionales por tipo)
     habit-today-toggle.tsx      marcar hoy (solo binarios)
@@ -187,8 +189,9 @@ solo lee el schema, no conecta. Nunca poner ahí la real (los logs son públicos
 **Fase 1 completa + extras.** Funcionando de punta a punta:
 auth con Google · CRUD completo de hábitos (crear, listar, editar, archivar/restaurar) ·
 3 tipos con meta y unidad · registro diario y retroactivo · grilla mensual con intensidad
-por cumplimiento · rachas suave/perfecta con tests · notas del día · modo oscuro ·
-diseño con shadcn · deploy con CI/CD y login funcionando en producción.
+por cumplimiento · rachas suave/perfecta con tests · notas del día · zona horaria del usuario ·
+modo oscuro · diseño con shadcn · deploy con CI/CD y login funcionando en producción.
+14 tests en Vitest (`streaks.test.ts`, `dates.test.ts`).
 
 **Pendientes** (por orden sugerido):
 1. **Vista anual** (toggle Mes/Año) y **página de detalle** por hábito (rutas dinámicas).
@@ -197,28 +200,29 @@ diseño con shadcn · deploy con CI/CD y login funcionando en producción.
 4. Pulido de portafolio: README con capturas y decisiones técnicas, estados de error/carga,
    responsive y accesibilidad.
 
-### Deuda técnica acordada (2026-07-20)
+### Zona horaria del usuario
 
-**a) Zona horaria en el modelo `User`.** Hoy el "día" lo resuelve el cliente en `useEffect`
-(patrón repetido ya en `habit-today-toggle`, `day-note` y `grid-cell`), y los Server
-Components que necesitan una fecha usan el UTC del servidor — p. ej. `year`/`month` de la
-grilla en `page.tsx`, que muestra el mes equivocado a fin de mes en zonas negativas.
+`User.timezone` (`String?`, nombre **IANA** tipo `"America/Santiago"`) lo reporta el navegador
+vía `<TimezoneSync stored={user.timezone} />`, un componente que no renderiza nada y llama a
+`setUserTimezone` en un `useEffect` **solo si difiere** de lo guardado (evita escribir en cada
+carga y corta el ciclo del `revalidatePath`).
 
-Solución acordada: campo `timezone String?` en `User` (IANA, capturado en el primer login con
-`Intl.DateTimeFormat().resolvedOptions().timeZone`) y hacer la matemática de fechas en el
-servidor con esa zona. Desbloquea features server-side (% de cumplimiento, rachas
-server-side, resúmenes, recordatorios). **Hacerlo al construir la vista anual / página de
-detalle**, que es donde el problema deja de ser cosmético; retrofitearlo se encarece con cada
-componente nuevo que resuelva el día en el cliente. Al hacerlo, extraer `localToday()`
-(el truco `toLocaleDateString("en-CA")` → `YYYY-MM-DD`) a `src/lib/dates.ts`.
+**Nunca guardar un offset numérico**: cambia con el horario de verano. El nombre IANA es una
+referencia a las reglas (DST incluido) y `Intl` sabe interpretarlo — hay un test que lo
+documenta con Nueva York en enero vs. julio.
 
-**b) Refactor `email` → `userId` en las queries.** `page.tsx` filtra con
-`user: { email: session.user.email! }`. Problemas: hace un JOIN innecesario, ata las queries a
-un campo mutable, y sobre todo `email` es `String?` en el schema — si llegara `undefined`,
-Prisma **ignora el filtro** (`undefined` = "sin filtro", distinto de `null`) y la query
-devolvería los hábitos de todos los usuarios. El `!` solo calla a TypeScript, no valida en
-runtime. Solución: usar `requireUser()` en `page.tsx` y filtrar por `userId: user.id`.
-**En su propio commit**, sin mezclar con una feature.
+Helpers del servidor en `src/lib/dates.ts`, puros y testeados (reciben el instante por
+parámetro en vez de leer el reloj, por eso son testeables): `dayInTimeZone(instant, tz)`,
+`monthInTimeZone(instant, tz)` (⚠️ `month` 0-indexado) e `isValidTimeZone(tz)`. `null` = UTC.
+
+`setUserTimezone` valida con Zod **y** con `isValidTimeZone` (una zona basura en la DB haría
+reventar cada render posterior de ese usuario con `RangeError`), y ante input inválido
+**retorna en silencio** en vez de lanzar: corre en background, un `throw` sería una promesa
+rechazada sin nadie escuchando. El resto de las acciones sí lanzan, porque hay un usuario esperando.
+
+⚠️ En `page.tsx`, el mes de la grilla sale de `monthInTimeZone(now, user.timezone)`, pero la
+ventana de 3 días de las notas se sigue calculando **en UTC** y el cliente elige la suya. No
+mezclar: reutilizar el `year`/`month` del usuario para armar la ventana UTC es un bug de borde de mes.
 
 Referencia visual: wireframes low-fi en
 https://claude.ai/code/artifact/ed9dbc47-3908-4a02-8bb7-072c50948a25
