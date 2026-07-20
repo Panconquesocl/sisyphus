@@ -6,7 +6,7 @@ import { HabitGrid } from "@/components/habit-grid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
-
+import { StreakBadge } from "@/components/streak-badge";
 
 export default async function Home() {
   const session = await auth();
@@ -80,6 +80,7 @@ export default async function Home() {
                       </span>
                     ) : null}
                   </span>
+                  <StreakBadge entries={[...valuesByDate]} type={h.type} target={h.target} />
                   {h.type === "BINARY" && (
                     <HabitTodayToggle habitId={h.id} entryDates={entryDates} />
                   )}
