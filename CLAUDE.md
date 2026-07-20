@@ -4,10 +4,9 @@ Guía para trabajar en este proyecto. Léela al inicio de cada sesión.
 
 ## Qué es
 
-**Sisyphus** es una app web para seguir el estado de hábitos y
-rutinas. La feature central es una **grilla mensual estilo "contributions" de GitHub**:
-un heatmap donde cada celda es un día y la intensidad del color refleja el cumplimiento
-del hábito ese día.
+**Sisyphus** es una app web para seguir el estado de hábitos y rutinas. La feature central
+es una **grilla mensual estilo "contributions" de GitHub**: un heatmap donde cada celda es
+un día y la intensidad del color refleja el cumplimiento del hábito ese día.
 
 Es un **proyecto de portafolio** para buscar trabajo. Las decisiones se optimizan para:
 (1) demostrar buenas prácticas full-stack, (2) verse profesional, (3) ser explicable en
@@ -15,30 +14,32 @@ una entrevista.
 
 ## Cómo trabajamos (IMPORTANTE)
 
-Este proyecto se construye en **pair programming, cero vibecoding**. El usuario quiere
-**entender todo**. Por lo tanto, al escribir código:
+Pair programming, **cero vibecoding**. El usuario quiere **entender todo**.
 
-- **Explica el porqué ANTES de escribir**, no después. Trade-offs, patrones, gotchas.
-- **Pasos pequeños y digeribles**: un concepto/archivo a la vez, no volcados de muchos
-  archivos de golpe.
-- **Pausa en checkpoints** para confirmar entendimiento e invitar preguntas.
-- **Enseña**: prioriza el razonamiento sobre la cantidad de output.
-- No sobre-scaffoldees en silencio; el usuario sigue el hilo y toma decisiones.
+- **El usuario escribe el código.** Claude **guía**: explica, entrega los snippets y da
+  feedback. No edites archivos de feature por tu cuenta salvo que te lo pidan.
+- **Explica el porqué ANTES del código**: trade-offs, patrones, gotchas.
+- **Pasos pequeños**: un concepto a la vez, no volcados de muchos archivos.
+- **Pausa en checkpoints** e invita preguntas.
+- **Lee el repo tú mismo** (Read/Bash/Grep) en vez de pedirle al usuario que pegue
+  archivos. Pide copy-paste solo para salidas de terminal.
 - **Comunícate en español.**
 
 ## Stack
 
-| Capa        | Elección                          |
-|-------------|-----------------------------------|
-| Framework   | Next.js (App Router) + TypeScript |
-| Estilos     | Tailwind CSS + shadcn/ui          |
-| DB          | PostgreSQL (Neon)                 |
-| ORM         | Prisma                            |
-| Auth        | Auth.js (NextAuth v5) — Google    |
-| Validación  | Zod                               |
-| Deploy      | Vercel                            |
+| Capa        | Elección                                  |
+|-------------|-------------------------------------------|
+| Framework   | Next.js 16 (App Router) + TypeScript      |
+| Estilos     | Tailwind v4 + shadcn/ui (sobre **Base UI**) |
+| DB          | PostgreSQL (Neon)                         |
+| ORM         | Prisma 7                                  |
+| Auth        | Auth.js (NextAuth v5) — Google            |
+| Validación  | Zod                                       |
+| Tests       | Vitest                                    |
+| Tema        | next-themes (modo oscuro)                 |
+| Deploy      | Vercel — https://sisyphus-psi.vercel.app  |
 
-## Modelo de datos (implementado — migración `init`)
+## Modelo de datos (migración `init`)
 
 ```
 User ─┬─< Habit ──< HabitEntry   (date @db.Date, value Int, @@unique([habitId, date]))
@@ -46,46 +47,126 @@ User ─┬─< Habit ──< HabitEntry   (date @db.Date, value Int, @@unique([
 ```
 Más los modelos que exige Auth.js: `Account`, `Session`, `VerificationToken`.
 
-- `Habit`: name, type, unit?, target?, color, icon?, order, `archivedAt` (soft-archive), timestamps.
-- `Habit.type` (enum `HabitType`): `BINARY` (hecho/no) / `QUANTITY` (ej. 8 vasos) / `DURATION` (ej. 30 min).
-- `HabitEntry.value` es **`Int`** (enteros; para decimales, usar una unidad más fina). Intensidad de color = `value` vs `target`.
-- **La nota es del DÍA, no del hábito**: `DayNote`, una por (usuario, día). Se edita en la vista «Hoy».
-- Los campos `date` usan `@db.Date` (solo día, sin hora) — ver timezones abajo.
+- `Habit`: name, type, unit?, target?, color, icon?, order, `archivedAt` (archivado suave), timestamps.
+- `Habit.type` (enum `HabitType`): `BINARY` / `QUANTITY` (ej. 8 vasos) / `DURATION` (ej. 30 min).
+  **El tipo es inmutable** al editar (los registros existentes se guardaron bajo su semántica).
+- `HabitEntry.value` es **`Int`** (para decimales, usar una unidad más fina: min en vez de horas).
+- **La nota es del DÍA, no del hábito**: `DayNote`, una por (usuario, día).
+  ⚠️ **Modelada pero AÚN NO construida** — pendiente, se editaría en la vista «Hoy».
 
 ### Timezones (decisión técnica clave)
 
-El "día" de un hábito depende de dónde está el usuario. Guardar `date` como el día local
-del usuario (columna `@db.Date`) evita que un check a las 11pm salte al día siguiente en
-UTC. Este es un buen tema para el README.
+El "día" de un hábito depende de **dónde está el usuario**, no del servidor (Vercel corre en UTC).
+Patrón usado en todo el proyecto:
+
+1. El **cliente** calcula su fecha local como `new Date().toLocaleDateString("en-CA")` → `"2026-07-20"`.
+2. El **servidor** la guarda con `new Date(\`${date}T00:00:00Z\`)` en la columna `@db.Date`.
+3. Al leer, se formatea de vuelta con `date.toISOString().slice(0, 10)`.
+
+Como el valor local depende del navegador, se calcula **dentro de `useEffect`** (no en el
+render) para evitar hydration mismatch entre SSR y cliente.
 
 ### Prisma 7 (notas clave)
 
-- La conexión NO va en `schema.prisma` sino en `prisma.config.ts` (usa `DIRECT_URL`, la directa, para migraciones).
+- La conexión NO va en `schema.prisma` sino en `prisma.config.ts` (usa `DIRECT_URL` para migraciones).
 - El cliente se genera en `src/generated/prisma/` (gitignored). Import: `@/generated/prisma/client`.
-- El runtime necesita un **driver adapter**: en `src/lib/prisma.ts`, `new PrismaClient({ adapter: new PrismaNeon({ connectionString: DATABASE_URL }) })` (patrón singleton). `DATABASE_URL` = pooled (app); `DIRECT_URL` = directa (migraciones).
+- Runtime necesita **driver adapter**: `src/lib/prisma.ts` usa `new PrismaClient({ adapter: new PrismaNeon(...) })`
+  con patrón singleton. `DATABASE_URL` = pooled (app); `DIRECT_URL` = directa (migraciones).
 - `postinstall: prisma generate` para que Vercel regenere el cliente en cada deploy.
+- `migrate dev` **no** siempre corre `generate`; a veces hay que ejecutarlo a mano.
+
+### shadcn sobre Base UI (NO Radix)
+
+Diferencia importante al usar componentes:
+- **No existe `asChild`.** `PopoverTrigger` / `DialogTrigger` **ya son botones**: se les pasan
+  `className`, `style`, `title`, etc. directamente.
+- Para darles estilo de botón shadcn: `className={buttonVariants({ variant, size })}`.
+- `open` / `onOpenChange` sí funcionan igual (componentes controlados).
+
+## Reglas de negocio: rachas
+
+Nivel de cada día (`src/lib/streaks.ts`):
+- **PERFECT**: binario hecho, o `value >= target`.
+- **SOFT**: `value >= target / 2` (solo cantidad/duración).
+- **NONE**: sin registro o bajo el 50%.
+
+Racha actual: se muestra **una sola**, con prioridad **perfecta → suave → ninguna**, y solo
+si tiene **≥ 2 días**. **Regla de gracia**: se cuenta desde hoy, o desde ayer si hoy aún no
+tiene registro (para no perderla). Si hoy se registró **bajo el umbral**, la racha sí se rompe.
 
 ## Convenciones
 
 - TypeScript estricto; sin `any` salvo justificación.
 - Server Components por defecto; `"use client"` solo cuando se necesita interactividad.
-- Mutaciones vía **Server Actions** + validación con **Zod**.
-- Acceso a DB centralizado en `lib/` (no queries de Prisma sueltas en componentes).
-- Nombres de archivos: `kebab-case`. Componentes React: `PascalCase`.
+- Mutaciones vía **Server Actions** + validación con **Zod** (`safeParse`).
+- **Toda query/mutación se filtra por el usuario logueado** (`requireUser()`), y las acciones
+  verifican propiedad del recurso antes de tocarlo.
+- Props que cruzan servidor→cliente deben ser **serializables** (pasar `[string, number][]`, no `Map`).
+- Nombres de archivos: `kebab-case`. Componentes React: `PascalCase`. Archivos con JSX: `.tsx`.
+- **Git: GitHub Flow.** Rama `feat/...` por feature → PR (`gh pr create --fill`) → `gh pr merge --squash`.
+  Conventional Commits. Nunca commitear directo a `main`.
+
+## Estructura del código
+
+```
+src/
+  auth.ts                       config de Auth.js (handlers, auth, signIn, signOut)
+  app/
+    layout.tsx                  ThemeProvider + metadata
+    page.tsx                    Home: login, form, lista de hábitos, archivados
+    actions.ts                  TODAS las Server Actions
+    api/auth/[...nextauth]/     route handler de Auth.js
+  lib/
+    prisma.ts                   cliente Prisma singleton + adapter Neon
+    auth-helpers.ts             requireUser()
+    grid.ts                     buildMonthGrid, intensityLevel, LEVEL_COLORS
+    streaks.ts                  dayLevel, computeStreak  (+ streaks.test.ts)
+  components/
+    habit-form.tsx              crear hábito (campos condicionales por tipo)
+    habit-today-toggle.tsx      marcar hoy (solo binarios)
+    habit-grid.tsx              grilla mensual (server) + etiquetas de días
+    grid-cell.tsx               celda (client): binario togglea, no-binario abre popover
+    streak-badge.tsx            badge ⭐/🔥
+    edit-habit-dialog.tsx       diálogo de edición
+    archive-button.tsx          archivar / restaurar
+    theme-provider.tsx, theme-toggle.tsx
+    ui/                         componentes de shadcn
+```
+
+Server Actions disponibles en `src/app/actions.ts`: `createHabit`, `updateHabit`,
+`setHabitArchived`, `toggleEntry` (binarios), `setEntry` (valores).
+
+Colores del heatmap: variables CSS `--heat-0..4` en `globals.css` (`:root` y `.dark`),
+referenciadas desde `LEVEL_COLORS`.
 
 ## Comandos
 
 ```bash
-pnpm dev                            # servidor de desarrollo (localhost:3000)
+pnpm dev                            # desarrollo (localhost:3000)
 pnpm build                          # build de producción
 pnpm lint                           # linter
+pnpm test                           # tests (Vitest)
 pnpm prisma generate                # regenera el cliente (src/generated/prisma)
-pnpm prisma migrate dev --name <n>  # crea y aplica una migración en desarrollo
+pnpm prisma migrate dev --name <n>  # crea y aplica una migración
 pnpm prisma studio                  # explorador visual de la DB
 ```
 
-## Estado actual
+## Estado actual (2026-07-20)
 
-**Fase 1 en curso.** Hecho: modelo de datos + migración `init` (7 tablas en Neon),
-cliente Prisma con adapter de Neon (verificado con éxito), deploy en Vercel con CI/CD.
-Siguiente: **Auth.js con Google**. Ver `docs/PLAN.md` para el roadmap por fases.
+**Fase 1 completa + extras.** Funcionando de punta a punta:
+auth con Google · CRUD completo de hábitos (crear, listar, editar, archivar/restaurar) ·
+3 tipos con meta y unidad · registro diario y retroactivo · grilla mensual con intensidad
+por cumplimiento · rachas suave/perfecta con tests · modo oscuro · diseño con shadcn ·
+deploy con CI/CD y login funcionando en producción.
+
+**Pendientes** (por orden sugerido):
+1. **Notas del día** (`DayNote`) — modelada pero sin construir.
+2. **Vista anual** (toggle Mes/Año) y **página de detalle** por hábito (rutas dinámicas).
+3. Racha máxima histórica + % de cumplimiento.
+4. Impedir marcar **días futuros** (requiere el "hoy" local del cliente).
+5. Pulido de portafolio: README con capturas y decisiones técnicas, estados de error/carga,
+   responsive y accesibilidad.
+
+Referencia visual: wireframes low-fi en
+https://claude.ai/code/artifact/ed9dbc47-3908-4a02-8bb7-072c50948a25
+Roadmap por fases: `docs/PLAN.md`.

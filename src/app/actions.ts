@@ -125,3 +125,43 @@ export async function setHabitArchived(habitId: string, archived: boolean) {
 
   revalidatePath("/");
 }
+
+const UpdateHabitSchema = z.object({
+  habitId: z.string().min(1),
+  name: z.string().trim().min(1, "El nombre es obligatorio").max(60),
+  target: z.coerce.number().int().positive().optional(),
+  unit: z.string().trim().max(20).optional(),
+});
+
+export async function updateHabit(formData: FormData) {
+  const user = await requireUser();
+
+  const parsed = UpdateHabitSchema.safeParse({
+    habitId: formData.get("habitId"),
+    name: formData.get("name"),
+    target: formData.get("target") || undefined,
+    unit: formData.get("unit") || undefined,
+  });
+  if (!parsed.success) throw new Error(parsed.error.issues[0].message);
+
+  const { habitId, name, target, unit } = parsed.data;
+
+  const habit = await prisma.habit.findFirst({
+    where: { id: habitId, userId: user.id },
+  });
+  if (!habit) throw new Error("Hábito no encontrado");
+
+  const isBinary = habit.type === "BINARY";
+  if (!isBinary && !target) throw new Error("La meta es obligatoria para Cantidad/Duración");
+
+  await prisma.habit.update({
+    where: { id: habitId },
+    data: {
+      name,
+      target: isBinary ? null : target,
+      unit: isBinary ? null : unit ?? null,
+    },
+  });
+
+  revalidatePath("/");
+}
