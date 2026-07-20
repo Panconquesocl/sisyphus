@@ -79,8 +79,14 @@ lint `react-hooks/set-state-in-effect` (que sí saltaba con el viejo `useEffect`
 - El cliente se genera en `src/generated/prisma/` (gitignored). Import: `@/generated/prisma/client`.
 - Runtime necesita **driver adapter**: `src/lib/prisma.ts` usa `new PrismaClient({ adapter: new PrismaNeon(...) })`
   con patrón singleton. `DATABASE_URL` = pooled (app); `DIRECT_URL` = directa (migraciones).
-- `postinstall: prisma generate` para que Vercel regenere el cliente en cada deploy.
+- El cliente generado está **gitignorado**, así que hay que generarlo en cada build. Va en
+  **`build: "prisma generate && next build"`**, NO solo en `postinstall`: Vercel cachea el
+  install y, si no hay nada que instalar, **no dispara los lifecycle scripts** → el build
+  falla con `Module not found: @/generated/prisma/client`. El `postinstall` se mantiene igual
+  (sirve al clonar o cambiar de rama en local). Bug real, 2026-07-20.
 - `migrate dev` **no** siempre corre `generate`; a veces hay que ejecutarlo a mano.
+- `package.json#packageManager` debe coincidir con la versión de pnpm que escribió
+  `pnpm-lock.yaml`, o Vercel avisa y `--frozen-lockfile` en CI se vuelve frágil.
 
 ### shadcn sobre Base UI (NO Radix)
 

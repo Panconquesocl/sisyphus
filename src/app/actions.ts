@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { revalidatePath } from "next/cache";
+import { isValidTimeZone } from "@/lib/dates";
 
 const CreateHabitSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(60),
@@ -189,6 +190,26 @@ export async function setDayNote(date: string, content: string) {
       update: { content: text },
     });
   }
+
+  revalidatePath("/");
+}
+
+const SetUserTimezoneSchema = z.object({
+  timeZone: z.string().min(1).max(64),
+});
+
+export async function setUserTimezone(timeZone: string) {
+  const user = await requireUser();
+
+  const parsed = SetUserTimezoneSchema.safeParse({ timeZone });
+  // Viene del cliente y corre en background: si es basura, ignoramos en silencio.
+  if (!parsed.success || !isValidTimeZone(parsed.data.timeZone)) return;
+  if (user.timezone === parsed.data.timeZone) return;
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { timezone: parsed.data.timeZone },
+  });
 
   revalidatePath("/");
 }

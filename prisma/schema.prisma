@@ -26,6 +26,7 @@ model User{
   sessions Session[]
   habits Habit[]
   dayNotes DayNote[]
+  timezone String?
 }
 
 model Account{

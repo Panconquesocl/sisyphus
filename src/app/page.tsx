@@ -11,6 +11,8 @@ import { ArchiveButton } from "@/components/archive-button";
 import { EditHabitDialog } from "@/components/edit-habit-dialog";
 import { DayNote } from "@/components/day-note";
 import { requireUser } from "@/lib/auth-helpers";
+import { monthInTimeZone } from "@/lib/dates";
+import { TimezoneSync } from "@/components/timezone-sync";
 
 export default async function Home() {
   const session = await auth();
@@ -44,13 +46,14 @@ export default async function Home() {
   });
 
   const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = now.getUTCMonth();
-  // El servidor no sabe en qué día está el usuario. Traemos ayer/hoy/mañana en UTC:
-  // esa ventana cubre cualquier zona horaria (de UTC-12 a UTC+14) y el cliente
-  // elige la que corresponde a su día local.
+
+  // El mes de la grilla es el del USUARIO, no el del servidor.
+  const { year, month } = monthInTimeZone(now, user.timezone);
+
+  // La ventana de notas se mantiene en UTC a propósito: cubre los 3 días
+  // posibles y el cliente elige el suyo con useLocalToday().
   const DAY_MS = 86_400_000;
-  const utcToday = Date.UTC(year, month, now.getUTCDate());
+  const utcToday = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 
   const dayNotes = await prisma.dayNote.findMany({
     where: {
@@ -61,6 +64,7 @@ export default async function Home() {
 
   return (
     <main className="mx-auto max-w-2xl p-6 md:p-10">
+       <TimezoneSync stored={user.timezone} />
       <header className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Sisyphus</h1>
