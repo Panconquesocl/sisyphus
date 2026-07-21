@@ -194,11 +194,38 @@ modo oscuro · diseño con shadcn · deploy con CI/CD y login funcionando en pro
 14 tests en Vitest (`streaks.test.ts`, `dates.test.ts`).
 
 **Pendientes** (por orden sugerido):
-1. **Vista anual** (toggle Mes/Año) y **página de detalle** por hábito (rutas dinámicas).
-2. Racha máxima histórica + % de cumplimiento.
-3. Impedir marcar **días futuros** (requiere el "hoy" local del cliente).
-4. Pulido de portafolio: README con capturas y decisiones técnicas, estados de error/carga,
+1. **Página de detalle por hábito** (`/habits/[id]`): métricas (racha actual + máxima
+   histórica, % de cumplimiento, totales) + grilla del **año** de ese hábito, solo-lectura.
+   Funciona en mobile y desktop; en mobile es la ÚNICA vía para ver el resumen anual.
+2. **Dashboard anual (enfocado en desktop)**: grilla del año completo **por cada hábito**
+   apiladas + una grilla de **notas** (casillas amarillas los días con `DayNote`; clic muestra
+   la nota). Solo-lectura. En mobile NO se muestra la pared de grillas: se degrada a una lista
+   de hábitos que enlaza a su detalle (1).
+3. Pulido de portafolio: README con capturas y decisiones técnicas, estados de error/carga,
    responsive y accesibilidad.
+
+**Estrategia responsive (decisión de producto, 2026-07-20):** mobile = registro +
+visualización de corto plazo; desktop = análisis del año completo. Por eso el dashboard anual
+multi-hábito es desktop-only y en mobile se fuerza a ver el año hábito-por-hábito vía (1).
+Las vistas anuales son **solo-lectura** (celdas de año demasiado chicas para registrar bien;
+el registro se queda en las celdas grandes de la Home).
+
+**Diferido (2026-07-20):** el "cómo forzar desktop-only" se pospone. De momento las vistas
+anuales existen **solo como rutas accesibles por URL**, sin enlace desde la Home (todavía no
+hay barra de navegación). Cuando la haya, bastará mostrar el botón de acceso según viewport.
+Si alguien entra al dashboard desde mobile por ahora, se verá subóptimo — se maneja después,
+no es prioridad.
+
+**Cambios anotados para hacer luego (2026-07-20):**
+- **Home: grilla de 3 meses.** La mini-grilla de cada hábito pasa de mostrar solo el mes
+  actual a mostrar **los últimos 3 meses hacia atrás desde hoy**. Cambio visual. Efecto
+  colateral: resuelve de facto el punto C (días futuros no clickeables), porque la ventana
+  termina en hoy — pero el foco es lo visual, no C. (C sale así de la lista de pendientes.)
+- **Acciones de la tarjeta en un popover.** Los botones editar/archivar se mueven a un popover
+  que se abre con un botón `...` dentro de la misma tarjeta del hábito, para limpiar la cabecera.
+- **Borrado definitivo de archivados.** Botón rojo en cada hábito archivado que borra el hábito
+  para siempre (nueva Server Action `deleteHabit` con hard delete + cascada de entries), con un
+  **modal de confirmación** antes de ejecutar.
 
 ### Zona horaria del usuario
 
