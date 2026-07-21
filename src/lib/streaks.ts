@@ -53,3 +53,47 @@ export function computeStreak(
 
   return { kind: "none", length: 0 };
 }
+export function maxStreak(
+  valuesByDate: Map<string, number>,
+  type: HabitType,
+  target: number | null,
+): number {
+  // Solo días perfectos, en orden cronológico.
+  const perfectDays = [...valuesByDate.keys()]
+    .filter((d) => dayLevel(valuesByDate.get(d), type, target) === "PERFECT")
+    .sort();
+
+  let best = 0;
+  let current = 0;
+  let prev: string | null = null;
+
+  for (const day of perfectDays) {
+    // Continúa el tramo solo si este día es el siguiente calendario al anterior.
+    current = prev !== null && prevDay(day) === prev ? current + 1 : 1;
+    if (current > best) best = current;
+    prev = day;
+  }
+
+  return best;
+}
+
+/**
+ * % de días perfectos sobre los días transcurridos del año.
+ * `dayOfYear` = qué número de día del año es hoy PARA EL USUARIO (1..366);
+ * lo calcula quien llama, con la zona horaria del usuario.
+ */
+export function completionRate(
+  valuesByDate: Map<string, number>,
+  type: HabitType,
+  target: number | null,
+  year: number,
+  dayOfYear: number,
+): number {
+  const prefix = `${year}-`;
+  const perfect = [...valuesByDate.keys()].filter(
+    (d) => d.startsWith(prefix) && dayLevel(valuesByDate.get(d), type, target) === "PERFECT",
+  ).length;
+
+  if (dayOfYear <= 0) return 0;
+  return Math.round((perfect / dayOfYear) * 100);
+}
