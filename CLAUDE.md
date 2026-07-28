@@ -127,19 +127,23 @@ src/
   app/
     layout.tsx                  ThemeProvider + metadata
     page.tsx                    Home: login, form, lista de hábitos, archivados
+    habits/[id]/page.tsx        detalle de hábito: métricas + grilla anual (solo-lectura)
     actions.ts                  TODAS las Server Actions
     api/auth/[...nextauth]/     route handler de Auth.js
   lib/
     prisma.ts                   cliente Prisma singleton + adapter Neon
     auth-helpers.ts             requireUser()
-    grid.ts                     buildMonthGrid, intensityLevel, LEVEL_COLORS
-    streaks.ts                  dayLevel, computeStreak  (+ streaks.test.ts)
+    grid.ts                     buildMonthGrid, buildYearGrid, yearMonthLabels,
+                                intensityLevel, LEVEL_COLORS  (+ grid.test.ts)
+    streaks.ts                  dayLevel, computeStreak, maxStreak, completionRate
+                                (+ streaks.test.ts)
     dates.ts                    localToday() (cliente) + dayInTimeZone/monthInTimeZone/
                                 isValidTimeZone (servidor)  (+ dates.test.ts)
     use-local-today.ts          hook: día local del usuario (null en SSR)
     use-hydrated.ts             hook: false en SSR, true en el navegador
   components/
     timezone-sync.tsx           reporta la zona del navegador (no renderiza nada)
+    year-grid.tsx               grilla anual solo-lectura (server, SIN client JS)
     day-note.tsx                nota del día (textarea + guardar)
     habit-form.tsx              crear hábito (campos condicionales por tipo)
     habit-today-toggle.tsx      marcar hoy (solo binarios)
@@ -190,13 +194,12 @@ solo lee el schema, no conecta. Nunca poner ahí la real (los logs son públicos
 auth con Google · CRUD completo de hábitos (crear, listar, editar, archivar/restaurar) ·
 3 tipos con meta y unidad · registro diario y retroactivo · grilla mensual con intensidad
 por cumplimiento · rachas suave/perfecta con tests · notas del día · zona horaria del usuario ·
-modo oscuro · diseño con shadcn · deploy con CI/CD y login funcionando en producción.
-14 tests en Vitest (`streaks.test.ts`, `dates.test.ts`).
+página de detalle por hábito (métricas + grilla anual) · modo oscuro · diseño con shadcn ·
+deploy con CI/CD y login funcionando en producción.
+26 tests en Vitest (`streaks.test.ts`, `dates.test.ts`, `grid.test.ts`).
 
 **Pendientes** (por orden sugerido):
-1. **Página de detalle por hábito** (`/habits/[id]`): métricas (racha actual + máxima
-   histórica, % de cumplimiento, totales) + grilla del **año** de ese hábito, solo-lectura.
-   Funciona en mobile y desktop; en mobile es la ÚNICA vía para ver el resumen anual.
+1. ✅ **Página de detalle por hábito** (`/habits/[id]`) — HECHO (PR #15).
 2. **Dashboard anual (enfocado en desktop)**: grilla del año completo **por cada hábito**
    apiladas + una grilla de **notas** (casillas amarillas los días con `DayNote`; clic muestra
    la nota). Solo-lectura. En mobile NO se muestra la pared de grillas: se degrada a una lista
