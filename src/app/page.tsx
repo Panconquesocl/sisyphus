@@ -21,9 +21,6 @@ export default async function Home() {
     return (
       
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 p-10 text-center">
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-        </div>
         <h1 className="text-3xl font-bold tracking-tight">Sisyphus</h1>
         <p className="text-muted-foreground">Empuja la piedra un día más.</p>
         <form action={async () => { "use server"; await signIn("google"); }}>
@@ -64,21 +61,19 @@ export default async function Home() {
 
   return (
     <main className="mx-auto max-w-2xl p-6 md:p-10">
-       <TimezoneSync stored={user.timezone} />
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Sisyphus</h1>
-          <p className="text-sm text-muted-foreground">Hola, {session.user.name}</p>
-          {/* <p className="text-sm text-muted-foreground">
-          {now.toLocaleDateString('es-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p> */}
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <form action={async () => { "use server"; await signOut(); }}>
-            <Button type="submit" variant="outline" size="sm">Salir</Button>
-          </form>
-        </div>
+      <TimezoneSync stored={user.timezone} />
+
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight">Hola, {session.user.name}</h1>
+        <p className="mt-1 text-sm text-muted-foreground first-letter:uppercase">
+          {now.toLocaleDateString("es-CL", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            timeZone: user.timezone ?? "UTC",
+          })}
+        </p>
       </header>
       <section className="mb-8">
       <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">

@@ -128,6 +128,7 @@ src/
     layout.tsx                  ThemeProvider + metadata
     page.tsx                    Home: login, form, lista de hábitos, archivados
     habits/[id]/page.tsx        detalle de hábito: métricas + grilla anual (solo-lectura)
+    my-year/page.tsx            dashboard anual (desktop): grillas por hábito + notas
     actions.ts                  TODAS las Server Actions
     api/auth/[...nextauth]/     route handler de Auth.js
   lib/
@@ -144,6 +145,8 @@ src/
   components/
     timezone-sync.tsx           reporta la zona del navegador (no renderiza nada)
     year-grid.tsx               grilla anual solo-lectura (server, SIN client JS)
+    note-year-grid.tsx          grilla anual de notas (casillas amarillas)
+    note-cell.tsx               casilla-nota (client): popover que previsualiza la nota
     day-note.tsx                nota del día (textarea + guardar)
     habit-form.tsx              crear hábito (campos condicionales por tipo)
     habit-today-toggle.tsx      marcar hoy (solo binarios)
@@ -200,11 +203,12 @@ deploy con CI/CD y login funcionando en producción.
 
 **Pendientes** (por orden sugerido):
 1. ✅ **Página de detalle por hábito** (`/habits/[id]`) — HECHO (PR #15).
-2. **Dashboard anual (enfocado en desktop)**: grilla del año completo **por cada hábito**
-   apiladas + una grilla de **notas** (casillas amarillas los días con `DayNote`; clic muestra
-   la nota). Solo-lectura. En mobile NO se muestra la pared de grillas: se degrada a una lista
-   de hábitos que enlaza a su detalle (1).
-3. Pulido de portafolio: README con capturas y decisiones técnicas, estados de error/carga,
+2. ✅ **Dashboard anual** (`/my-year`) — HECHO (PR #16): grillas anuales por hábito + grilla de
+   notas (casillas amarillas, popover al hacer clic). Desktop-only vía CSS (`hidden lg:flex` /
+   `flex lg:hidden`); en mobile degrada a lista de hábitos que enlaza al detalle. NO se usó
+   middleware+user-agent a propósito: la pregunta es de viewport, no de identidad de dispositivo.
+3. **Barra de navegación** — enlazar `/my-year` desde la Home (acceso pendiente desde PR #16).
+4. Pulido de portafolio: README con capturas y decisiones técnicas, estados de error/carga,
    responsive y accesibilidad.
 
 **Estrategia responsive (decisión de producto, 2026-07-20):** mobile = registro +
