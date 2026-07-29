@@ -10,11 +10,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { HabitType } from "@/lib/grid";
-import { useTransition } from "react";
-import { ColorPicker } from "./color-picker";
+import { normalizeColor } from "@/lib/grid";
+import { ColorPicker } from "@/components/color-picker";
+import { IconPicker } from "@/components/icon-picker";
+import { useState, useTransition } from "react";
 
 export function EditHabitDialog({
-  habitId, name, type, target, unit, open, onOpenChange, color,
+  habitId,
+  name,
+  type,
+  target,
+  unit,
+  open,
+  onOpenChange,
+  color: colorProp,
+  icon,
 }: {
   habitId: string;
   name: string;
@@ -24,9 +34,10 @@ export function EditHabitDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   color: string;
+  icon: string | null;
 }) {
-
   const [isPending, startTransition] = useTransition();
+  const [color, setColor] = useState<string>(normalizeColor(colorProp));
   const isBinary = type === "BINARY";
 
   function handleSubmit(formData: FormData) {
@@ -58,9 +69,13 @@ export function EditHabitDialog({
               <Input name="unit" defaultValue={unit ?? ""} placeholder="Unidad" />
             </div>
           )}
-           <div className="space-y-1.5">
+          <div className="space-y-1.5">
             <span className="text-sm text-muted-foreground">Color</span>
-            <ColorPicker name="color" defaultValue={color} />
+            <ColorPicker name="color" value={color} onChange={setColor} />
+          </div>
+          <div className="space-y-1.5">
+            <span className="text-sm text-muted-foreground">Ícono</span>
+            <IconPicker name="icon" defaultValue={icon} color={color} />
           </div>
           <div className="flex justify-end gap-2">
             <Button type="submit" disabled={isPending}>Guardar</Button>

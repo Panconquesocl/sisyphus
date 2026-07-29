@@ -4,12 +4,14 @@ import { createHabit } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useTransition } from "react";
-import { ColorPicker } from "./color-picker";
+import { ColorPicker } from "@/components/color-picker";
+import { IconPicker } from "@/components/icon-picker";
 
 export function HabitForm({ onSuccess }: { onSuccess?: () => void }) {
   const [type, setType] = useState("BINARY");
   const [isPending, startTransition] = useTransition();
   const showTarget = type !== "BINARY";
+  const [color, setColor] = useState("green");
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -30,16 +32,20 @@ export function HabitForm({ onSuccess }: { onSuccess?: () => void }) {
         <option value="QUANTITY">Cantidad</option>
         <option value="DURATION">Duración</option>
       </select>
-        <div className="space-y-1.5">
-        <span className="text-sm text-muted-foreground">Color</span>
-        <ColorPicker name="color" />
-      </div>
       {showTarget && (
         <>
           <Input name="target" type="number" min="1" placeholder="Meta (ej. 8)" required className="w-28" />
           <Input name="unit" placeholder="Unidad" className="w-28" />
         </>
       )}
+      <div className="space-y-1.5">
+        <span className="text-sm text-muted-foreground">Color</span>
+        <ColorPicker name="color" value={color} onChange={setColor} />
+        <div className="space-y-1.5">
+          <span className="text-sm text-muted-foreground">Ícono</span>
+          <IconPicker name="icon" color={color} />
+        </div>
+      </div>
       <Button type="submit" disabled={isPending}>Crear</Button>
     </form>
   );

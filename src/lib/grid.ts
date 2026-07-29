@@ -142,3 +142,6 @@ export function buildRangeGrid(
   while (cells.length % 7 !== 0) cells.push(null);
   return cells;
 }
+export function normalizeColor(c: string): HabitColor {
+  return isHabitColor(c) ? c : "green";
+}

@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth-helpers";
 import { revalidatePath } from "next/cache";
 import { isValidTimeZone } from "@/lib/dates";
 import { HABIT_COLORS } from "@/lib/grid";
+import { HABIT_ICON_NAMES } from "@/lib/habit-icons";
 
 const CreateHabitSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(60),
@@ -13,6 +14,7 @@ const CreateHabitSchema = z.object({
   target: z.coerce.number().int().positive().optional(),
   unit: z.string().trim().max(20).optional(),
   color: z.enum(HABIT_COLORS),
+  icon: z.enum(HABIT_ICON_NAMES as [string, ...string[]]).nullable(),
 })
 .refine((d) => d.type === "BINARY" || (d.target ?? 0) > 0, {
     message: "La meta es obligatoria para Cantidad/Duración",
@@ -28,13 +30,14 @@ export async function createHabit(formData: FormData) {
     target: formData.get("target") || undefined,
     unit: formData.get("unit") || undefined,
     color: formData.get("color"),
+    icon: formData.get("icon") || null,
   });
 
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0].message);
   }
 
-  const { name, type, target, unit, color } = parsed.data;
+  const { name, type, target, unit, color, icon } = parsed.data;
   const isBinary = type === "BINARY";
 
   await prisma.habit.create({
@@ -45,6 +48,7 @@ export async function createHabit(formData: FormData) {
       target: isBinary ? null : target,
       unit: isBinary ? null : unit ?? null,
       color,
+      icon,
     },
   });
 
@@ -137,6 +141,7 @@ const UpdateHabitSchema = z.object({
   target: z.coerce.number().int().positive().optional(),
   unit: z.string().trim().max(20).optional(),
   color: z.enum(HABIT_COLORS),
+  icon: z.enum(HABIT_ICON_NAMES as [string, ...string[]]).nullable(),
 });
 
 export async function updateHabit(formData: FormData) {
@@ -148,10 +153,11 @@ export async function updateHabit(formData: FormData) {
     target: formData.get("target") || undefined,
     unit: formData.get("unit") || undefined,
     color: formData.get("color"),
+    icon: formData.get("icon") || null,
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0].message);
 
-   const { habitId, name, target, unit, color } = parsed.data;
+   const { habitId, name, target, unit, color, icon } = parsed.data;
 
   const habit = await prisma.habit.findFirst({
     where: { id: habitId, userId: user.id },
@@ -168,6 +174,7 @@ export async function updateHabit(formData: FormData) {
       target: isBinary ? null : target,
       unit: isBinary ? null : unit ?? null,
       color,
+      icon,
     },
   });
 

@@ -15,6 +15,7 @@ import { DeleteHabitButton } from "@/components/delete-habit-button";
 import { HabitTodayControl } from "@/components/habit-today-control";
 import { NewHabitDialog } from "@/components/new-habit-dialog";
 import { LoginScreen } from "@/components/login-screen";
+import { HabitIcon } from "@/components/habit-icon";
 
 export default async function Home({
   searchParams,
@@ -95,13 +96,16 @@ export default async function Home({
           <div className="flex flex-col gap-2">
             {habits.map((h) => (
               <div key={h.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
-                <span className="flex-1 text-sm font-medium">
-                  {h.name}
-                  {h.target ? (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      meta {h.target}{h.unit ? ` ${h.unit}` : ""}
-                    </span>
-                  ) : null}
+                 <span className="flex flex-1 items-center gap-2 text-sm font-medium">
+                  <HabitIcon icon={h.icon} color={h.color} className="size-4 shrink-0" />
+                  <span>
+                    {h.name}
+                    {h.target ? (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        meta {h.target}{h.unit ? ` ${h.unit}` : ""}
+                      </span>
+                    ) : null}
+                  </span>
                 </span>
                 <HabitTodayControl
                   habitId={h.id}
@@ -167,8 +171,11 @@ export default async function Home({
               );
               return (
                 <Card key={h.id} className="p-3">
-                  <div className="mb-3 flex items-center gap-3">
-                    <span className="flex-1 font-medium">
+                  
+                <div className="mb-3 flex items-center gap-3">
+                  <span className="flex flex-1 items-center gap-2 font-medium">
+                    <HabitIcon icon={h.icon} color={h.color} className="size-4 shrink-0" />
+                    <span>
                       {h.name}
                       {h.target ? (
                         <span className="ml-2 text-sm text-muted-foreground">
@@ -176,7 +183,8 @@ export default async function Home({
                         </span>
                       ) : null}
                     </span>
-                    <StreakBadge entries={[...valuesByDate]} type={h.type} target={h.target} />
+                  </span>
+                  <StreakBadge entries={[...valuesByDate]} type={h.type} target={h.target} />
                     <HabitCardMenu
                       habitId={h.id}
                       name={h.name}
@@ -184,6 +192,7 @@ export default async function Home({
                       target={h.target}
                       unit={h.unit}
                       color={h.color}
+                      icon={h.icon}
                     />
                   </div>
                   <HabitGrid
