@@ -95,6 +95,23 @@ Diferencia importante al usar componentes:
   `className`, `style`, `title`, etc. directamente.
 - Para darles estilo de botón shadcn: `className={buttonVariants({ variant, size })}`.
 - `open` / `onOpenChange` sí funcionan igual (componentes controlados).
+- Base UI **sí** tiene equivalente a `asChild`: la prop **`render`** (ej. `AlertDialogCancel`
+  usa `render={<Button/>}`). El menú/alert-dialog exponen su API propia (`DropdownMenuItem`
+  acepta `onClick`; ver `habit-card-menu.tsx`, `delete-habit-button.tsx`).
+
+### Gotchas de layout (Tailwind)
+
+- **`grid-template-columns` con `repeat/minmax` anidados va por `style`, NO por clase arbitraria.**
+  Tailwind no compila `[grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]` (paréntesis
+  anidados) → el `grid` queda sin columnas y apila todo en 1 columna. Usar
+  `style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}`, como ya hacen
+  `habit-grid.tsx` / `year-grid.tsx`.
+- **`mx-auto` en un flex child lo encoge a `max-content`, no lo estira.** El `<body>` es
+  `flex flex-col`, así que el `<main>` es flex item; con solo `mx-auto max-w-*` se encogía y el
+  grid mostraba 1 columna. Fix: patrón canónico **`mx-auto w-full max-w-*`** (el `w-full` fuerza
+  el ancho). Bug real de la pasada de diseño, 2026-07-29.
+- Nunca concatenar clases Tailwind con `+` cuando una parte viene de `buttonVariants` (choques
+  de `display`/etc. silenciosos); usar `cn(...)`, que resuelve conflictos vía tailwind-merge.
 
 ## Reglas de negocio: rachas
 

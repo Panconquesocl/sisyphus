@@ -67,35 +67,40 @@ export default async function Home({
   });
 
   return (
-    <main className="mx-auto max-w-2xl p-6 md:p-10">
+      <main
+      className={cn(
+        "mx-auto w-full p-6 md:p-10",
+        months === 3 ? "max-w-[616px]" : "max-w-[832px]",
+      )}
+      >
       <TimezoneSync stored={user.timezone} />
 
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">Hola, {session.user.name}</h1>
-        <p className="mt-1 text-sm text-muted-foreground first-letter:uppercase">
-          {now.toLocaleDateString("es-CL", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            timeZone: user.timezone ?? "UTC",
-          })}
-        </p>
-      </header>
-      <section className="mb-8">
-      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-        Nota de hoy
-      </h2>
-      <DayNote notes={dayNotes.map((n) => [n.date.toISOString().slice(0, 10), n.content])} />
-      </section>
-
-      <section className="mb-8">
+        <header className="mb-8">
+          <h1 className="text-2xl font-bold tracking-tight">Hola, {session.user.name}</h1>
+          <p className="mt-1 text-sm text-muted-foreground first-letter:uppercase">
+            {now.toLocaleDateString("es-CL", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              timeZone: user.timezone ?? "UTC",
+            })}
+          </p>
+        </header>
+        <section className="mb-8">
         <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Nuevo hábito
+          Nota de hoy
         </h2>
-        <HabitForm />
-      </section>
+        <DayNote notes={dayNotes.map((n) => [n.date.toISOString().slice(0, 10), n.content])} />
+        </section>
 
+        <section className="mb-8">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Nuevo hábito
+          </h2>
+          <HabitForm />
+        </section>
+      
       <section>
           <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
@@ -122,14 +127,14 @@ export default async function Home({
             </Link>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
           {habits.map((h) => {
             const valuesByDate = new Map(
               h.entries.map((e) => [e.date.toISOString().slice(0, 10), e.value] as const),
             );
             return (
-              <Card key={h.id} className="p-4">
-                 <div className="mb-3 flex items-center gap-3">
+                <Card key={h.id} className="p-3">
+                <div className="mb-3 flex items-center gap-3">
                   <span className="flex-1 font-medium">
                     {h.name}
                     {h.target ? (
