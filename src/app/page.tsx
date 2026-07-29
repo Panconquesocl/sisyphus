@@ -1,19 +1,18 @@
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { HabitForm } from "@/components/habit-form";
-import { HabitTodayToggle } from "@/components/habit-today-toggle";
 import { HabitGrid } from "@/components/habit-grid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StreakBadge } from "@/components/streak-badge";
 import { ArchiveButton } from "@/components/archive-button";
-import { EditHabitDialog } from "@/components/edit-habit-dialog";
 import { DayNote } from "@/components/day-note";
 import { requireUser } from "@/lib/auth-helpers";
 import { TimezoneSync } from "@/components/timezone-sync";
 import { dayInTimeZone, subMonths } from "@/lib/dates";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { HabitCardMenu } from "@/components/habit-card-menu";
 
 export default async function Home({
   searchParams,
@@ -127,10 +126,9 @@ export default async function Home({
             const valuesByDate = new Map(
               h.entries.map((e) => [e.date.toISOString().slice(0, 10), e.value] as const),
             );
-            const entryDates = [...valuesByDate.keys()];
             return (
               <Card key={h.id} className="p-4">
-                <div className="mb-3 flex items-center gap-3">
+                 <div className="mb-3 flex items-center gap-3">
                   <span className="flex-1 font-medium">
                     {h.name}
                     {h.target ? (
@@ -140,16 +138,13 @@ export default async function Home({
                     ) : null}
                   </span>
                   <StreakBadge entries={[...valuesByDate]} type={h.type} target={h.target} />
-                  <EditHabitDialog
+                  <HabitCardMenu
                     habitId={h.id}
                     name={h.name}
                     type={h.type}
                     target={h.target}
                     unit={h.unit}
                   />
-                  <ArchiveButton habitId={h.id} archived={false} />    
-                  {h.type === "BINARY" && (<HabitTodayToggle habitId={h.id} entryDates={entryDates} />)}
-
                 </div>
                  <HabitGrid
                   habitId={h.id}

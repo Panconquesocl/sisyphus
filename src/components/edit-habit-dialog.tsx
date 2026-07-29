@@ -1,47 +1,41 @@
 "use client";
 
 import { updateHabit } from "@/app/actions";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import type { HabitType } from "@/lib/grid";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 
 export function EditHabitDialog({
-  habitId,
-  name,
-  type,
-  target,
-  unit,
+  habitId, name, type, target, unit, open, onOpenChange,
 }: {
   habitId: string;
   name: string;
   type: HabitType;
   target: number | null;
   unit: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+
   const [isPending, startTransition] = useTransition();
   const isBinary = type === "BINARY";
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       await updateHabit(formData);
-      setOpen(false);
+      onOpenChange(false);
     });
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className={buttonVariants({ variant: "ghost", size: "sm" })}>
-        Editar
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Editar hábito</DialogTitle>
@@ -63,9 +57,6 @@ export function EditHabitDialog({
             </div>
           )}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
-              Cancelar
-            </Button>
             <Button type="submit" disabled={isPending}>Guardar</Button>
           </div>
         </form>
