@@ -86,7 +86,8 @@ export default async function Home({
         </h2>
         <DayNote notes={dayNotes.map((n) => [n.date.toISOString().slice(0, 10), n.content])} />
         </section>
-
+          
+         {habits.length > 0 && (
         <section className="mb-8">
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
             Hoy
@@ -110,89 +111,94 @@ export default async function Home({
                 />
               </div>
             ))}
-            {habits.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Crea un hábito para empezar a registrar.
-              </p>
-            )}
           </div>
         </section>
-
-        
+      )}
       
       <section>
           <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
             Tus hábitos
           </h2>
+          {habits.length !== 0 && 
           <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-md border p-0.5 text-xs">
-            <Link
-              href="/?range=1m"
-              className={cn(
-                "rounded px-2 py-1",
-                months === 1 ? "bg-muted font-medium" : "text-muted-foreground",
-              )}
-            >
-              1 mes
-            </Link>
-            <Link
-              href="/?range=3m"
-              className={cn(
-                "rounded px-2 py-1",
-                months === 3 ? "bg-muted font-medium" : "text-muted-foreground",
-              )}
-            >
-              3 meses
-            </Link>
-          </div>
-          <NewHabitDialog/>
-
-          </div>
+            <div className="inline-flex rounded-md border p-0.5 text-xs">
+              <Link
+                href="/?range=1m"
+                className={cn(
+                  "rounded px-2 py-1",
+                  months === 1 ? "bg-muted font-medium" : "text-muted-foreground",
+                )}
+              >
+                1 mes
+              </Link>
+              <Link
+                href="/?range=3m"
+                className={cn(
+                  "rounded px-2 py-1",
+                  months === 3 ? "bg-muted font-medium" : "text-muted-foreground",
+                )}
+              >
+                3 meses
+              </Link>
+            </div>
+            
+            <NewHabitDialog/>
+          </div>}
         </div>
-        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
-          {habits.map((h) => {
-            const valuesByDate = new Map(
-              h.entries.map((e) => [e.date.toISOString().slice(0, 10), e.value] as const),
-            );
-            return (
+        {habits.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-10 text-center">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-muted text-2xl">
+              🪨
+            </div>
+            <div className="space-y-1">
+              <p className="font-medium">Aún no tienes hábitos</p>
+              <p className="text-sm text-muted-foreground">
+                Crea el primero y empieza a empujar la piedra.
+              </p>
+            </div>
+            <NewHabitDialog />
+          </div>
+        ) : (
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
+            {habits.map((h) => {
+              const valuesByDate = new Map(
+                h.entries.map((e) => [e.date.toISOString().slice(0, 10), e.value] as const),
+              );
+              return (
                 <Card key={h.id} className="p-3">
-                <div className="mb-3 flex items-center gap-3">
-                  <span className="flex-1 font-medium">
-                    {h.name}
-                    {h.target ? (
-                      <span className="ml-2 text-sm text-muted-foreground">
-                        meta {h.target}{h.unit ? ` ${h.unit}` : ""}
-                      </span>
-                    ) : null}
-                  </span>
-                  <StreakBadge entries={[...valuesByDate]} type={h.type} target={h.target} />
-                  <HabitCardMenu
+                  <div className="mb-3 flex items-center gap-3">
+                    <span className="flex-1 font-medium">
+                      {h.name}
+                      {h.target ? (
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          meta {h.target}{h.unit ? ` ${h.unit}` : ""}
+                        </span>
+                      ) : null}
+                    </span>
+                    <StreakBadge entries={[...valuesByDate]} type={h.type} target={h.target} />
+                    <HabitCardMenu
+                      habitId={h.id}
+                      name={h.name}
+                      type={h.type}
+                      target={h.target}
+                      unit={h.unit}
+                    />
+                  </div>
+                  <HabitGrid
                     habitId={h.id}
-                    name={h.name}
+                    startDate={startDate}
+                    endDate={today}
                     type={h.type}
                     target={h.target}
                     unit={h.unit}
+                    valuesByDate={valuesByDate}
                   />
-                </div>
-                 <HabitGrid
-                  habitId={h.id}
-                  startDate={startDate}
-                  endDate={today}
-                  type={h.type}
-                  target={h.target}
-                  unit={h.unit}
-                  valuesByDate={valuesByDate}
-                />
-              </Card>
-            );
-          })}
-          {habits.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Aún no tienes hábitos. Crea el primero arriba.
-            </p>
-          )}
-        </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
         {archivedHabits.length > 0 && (
         <div className="mt-8">
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
