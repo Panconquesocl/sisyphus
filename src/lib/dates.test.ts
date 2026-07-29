@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { dayInTimeZone, monthInTimeZone, isValidTimeZone } from "./dates";
+import { subMonths } from "./dates";
 
 describe("dayInTimeZone", () => {
   it("usa UTC cuando no hay zona", () => {
@@ -34,5 +35,15 @@ describe("isValidTimeZone", () => {
   it("acepta nombres IANA y rechaza basura", () => {
     expect(isValidTimeZone("America/Santiago")).toBe(true);
     expect(isValidTimeZone("Marte/Olympus")).toBe(false);
+  });
+});
+
+describe("subMonths", () => {
+  it("resta meses dentro del año", () => {
+    expect(subMonths("2026-07-20", 1)).toBe("2026-06-20");
+    expect(subMonths("2026-07-20", 3)).toBe("2026-04-20");
+  });
+  it("cruza el año", () => {
+    expect(subMonths("2026-01-15", 3)).toBe("2025-10-15");
   });
 });

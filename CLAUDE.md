@@ -230,6 +230,10 @@ no es prioridad.
   termina en hoy — pero el foco es lo visual, no C. (C sale así de la lista de pendientes.)
 - **Acciones de la tarjeta en un popover.** Los botones editar/archivar se mueven a un popover
   que se abre con un botón `...` dentro de la misma tarjeta del hábito, para limpiar la cabecera.
+  Al hacerlo, revisar el **ancho de la card**: hoy lo fija la fila de encabezado (nombre +
+  botones), no la grilla. Con el header más angosto se puede ajustar el `max-w` dinámico del
+  `main`/lista según el rango (1 mes vs 3 meses) para eliminar el espacio muerto a la derecha
+  de la grilla de 1 mes. (Pendiente ligado a este cambio, no antes.)
 - **Borrado definitivo de archivados.** Botón rojo en cada hábito archivado que borra el hábito
   para siempre (nueva Server Action `deleteHabit` con hard delete + cascada de entries), con un
   **modal de confirmación** antes de ejecutar.
