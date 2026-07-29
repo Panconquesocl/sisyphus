@@ -183,6 +183,7 @@ export default async function Home({
                       type={h.type}
                       target={h.target}
                       unit={h.unit}
+                      color={h.color}
                     />
                   </div>
                   <HabitGrid
@@ -193,6 +194,7 @@ export default async function Home({
                     target={h.target}
                     unit={h.unit}
                     valuesByDate={valuesByDate}
+                    color={h.color}
                   />
                 </Card>
               );

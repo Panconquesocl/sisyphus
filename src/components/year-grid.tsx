@@ -1,14 +1,16 @@
-import { buildYearGrid, intensityLevel, LEVEL_COLORS, yearMonthLabels, type HabitType } from "@/lib/grid";
+import { buildYearGrid, intensityLevel, rampFor, yearMonthLabels, type HabitType } from "@/lib/grid"
 
 export function YearGrid({
-  year, type, target, unit, valuesByDate,
+  year, type, target, unit, valuesByDate, color
 }: {
   year: number;
   type: HabitType;
   target: number | null;
   unit: string | null;
   valuesByDate: Map<string, number>;
+  color: string
 }) {
+  const ramp = rampFor(color);
   const cells = buildYearGrid(year, valuesByDate);
   const labels = yearMonthLabels(cells);
 
@@ -38,7 +40,7 @@ export function YearGrid({
               : cell.date;
             return (
               <div key={i} title={label}
-                   style={{ width: 11, height: 11, borderRadius: 2, background: LEVEL_COLORS[level] }} />
+                   style={{ width: 11, height: 11, borderRadius: 2, background: ramp[level] }} />
             );
           })}
         </div>

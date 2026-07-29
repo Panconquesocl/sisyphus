@@ -69,6 +69,7 @@ export default async function HabitDetail({
           target={habit.target}
           unit={habit.unit}
           valuesByDate={valuesByDate}
+          color={habit.color}
         />
       </section>
     </main>

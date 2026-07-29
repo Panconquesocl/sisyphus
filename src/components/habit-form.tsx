@@ -4,6 +4,7 @@ import { createHabit } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useTransition } from "react";
+import { ColorPicker } from "./color-picker";
 
 export function HabitForm({ onSuccess }: { onSuccess?: () => void }) {
   const [type, setType] = useState("BINARY");
@@ -29,6 +30,10 @@ export function HabitForm({ onSuccess }: { onSuccess?: () => void }) {
         <option value="QUANTITY">Cantidad</option>
         <option value="DURATION">Duración</option>
       </select>
+        <div className="space-y-1.5">
+        <span className="text-sm text-muted-foreground">Color</span>
+        <ColorPicker name="color" />
+      </div>
       {showTarget && (
         <>
           <Input name="target" type="number" min="1" placeholder="Meta (ej. 8)" required className="w-28" />

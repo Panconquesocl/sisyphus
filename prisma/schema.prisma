@@ -80,7 +80,7 @@ model Habit {
   type       HabitType @default(BINARY)
   unit       String?   // "vasos", "min" — solo QUANTITY / DURATION
   target     Int?      // meta numérica — solo QUANTITY / DURATION
-  color      String    @default("#6b7280")
+  color      String @default("green")
   icon       String?
   order      Int       @default(0) // para reordenar la lista a futuro
   archivedAt DateTime? // null = activo; con fecha = archivado
