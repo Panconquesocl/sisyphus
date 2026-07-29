@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import type { HabitType } from "@/lib/grid";
 import { useTransition } from "react";
+import { ColorPicker } from "./color-picker";
 
 export function EditHabitDialog({
-  habitId, name, type, target, unit, open, onOpenChange,
+  habitId, name, type, target, unit, open, onOpenChange, color,
 }: {
   habitId: string;
   name: string;
@@ -22,6 +23,7 @@ export function EditHabitDialog({
   unit: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  color: string;
 }) {
 
   const [isPending, startTransition] = useTransition();
@@ -56,6 +58,10 @@ export function EditHabitDialog({
               <Input name="unit" defaultValue={unit ?? ""} placeholder="Unidad" />
             </div>
           )}
+           <div className="space-y-1.5">
+            <span className="text-sm text-muted-foreground">Color</span>
+            <ColorPicker name="color" defaultValue={color} />
+          </div>
           <div className="flex justify-end gap-2">
             <Button type="submit" disabled={isPending}>Guardar</Button>
           </div>

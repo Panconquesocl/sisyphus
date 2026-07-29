@@ -56,6 +56,7 @@ const { year } = monthInTimeZone(new Date(), user.timezone);
                 target={h.target}
                 unit={h.unit}
                 valuesByDate={valuesByDate}
+                color={h.color}
               />
             </section>
           );

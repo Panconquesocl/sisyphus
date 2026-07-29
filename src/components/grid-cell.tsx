@@ -1,7 +1,7 @@
 "use client";
 
 import { toggleEntry, setEntry } from "@/app/actions";
-import { intensityLevel, LEVEL_COLORS, type HabitType } from "@/lib/grid";
+import { intensityLevel, type HabitType } from "@/lib/grid";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,19 +9,20 @@ import { useState, useTransition } from "react";
 
 type Props = {
   habitId: string;
-  date: string;
+  date: string; 
   value: number | null;
   type: HabitType;
   target: number | null;
   unit: string | null;
+  ramp: string[];
 };
 
-export function GridCell({ habitId, date, value, type, target, unit }: Props) {
+export function GridCell({ habitId, date, value, type, target, unit, ramp }: Props) {
   const level = intensityLevel(value, type, target);
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
-  const cellStyle = { backgroundColor: LEVEL_COLORS[level], opacity: isPending ? 0.5 : 1 };
+    const cellStyle = { backgroundColor: ramp[level], opacity: isPending ? 0.5 : 1 };
   const title = value ? `${date}: ${value}${unit ? " " + unit : ""}` : date;
 
   // Binario: click directo, sin popover

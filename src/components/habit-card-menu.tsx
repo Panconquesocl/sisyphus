@@ -14,13 +14,14 @@ import { EditHabitDialog } from "@/components/edit-habit-dialog";
 import type { HabitType } from "@/lib/grid";
 
 export function HabitCardMenu({
-  habitId, name, type, target, unit,
+  habitId, name, type, target, unit, color,
 }: {
   habitId: string;
   name: string;
   type: HabitType;
   target: number | null;
   unit: string | null;
+  color: string;
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -56,6 +57,7 @@ export function HabitCardMenu({
         unit={unit}
         open={editOpen}
         onOpenChange={setEditOpen}
+        color={color}
       />
     </>
   );

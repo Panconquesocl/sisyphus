@@ -45,6 +45,30 @@ export const LEVEL_COLORS = [
   "var(--heat-4)",
 ];
 
+export const HABIT_COLORS = ["green", "blue", "violet", "amber", "rose", "cyan"] as const;
+export type HabitColor = (typeof HABIT_COLORS)[number];
+
+function isHabitColor(c: string): c is HabitColor {
+  return (HABIT_COLORS as readonly string[]).includes(c);
+}
+
+/**
+ * Rampa de 5 niveles para un color de hábito. El nivel 0 (vacío) es siempre el
+ * gris neutro compartido; 1-4 son los tonos del color. Verde reusa las vars
+ * --heat-* (look actual). Un valor desconocido (hex legacy) cae a verde.
+ */
+export function rampFor(color: string): string[] {
+  const key = isHabitColor(color) ? color : "green";
+  const prefix = key === "green" ? "heat" : key;
+  return [
+    "var(--heat-0)",
+    `var(--${prefix}-1)`,
+    `var(--${prefix}-2)`,
+    `var(--${prefix}-3)`,
+    `var(--${prefix}-4)`,
+  ];
+}
+
 export function buildYearGrid(
   year: number,
   valuesByDate: Map<string, number>,

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildYearGrid, yearMonthLabels } from "./grid";
 import { buildRangeGrid } from "./grid";
+import { rampFor } from "./grid";
 
 describe("buildYearGrid", () => {
   const cells2026 = buildYearGrid(2026, new Map());
@@ -54,5 +55,21 @@ describe("buildRangeGrid", () => {
     expect(reales[0]!.date).toBe("2026-05-01");
     expect(reales.at(-1)!.date).toBe("2026-05-31");
     expect(reales).toHaveLength(31);
+  });
+});
+
+describe("rampFor", () => {
+  it("verde reusa las vars --heat (look actual intacto)", () => {
+    expect(rampFor("green")).toEqual([
+      "var(--heat-0)", "var(--heat-1)", "var(--heat-2)", "var(--heat-3)", "var(--heat-4)",
+    ]);
+  });
+  it("un color conocido usa sus vars, con nivel 0 neutro compartido", () => {
+    expect(rampFor("blue")).toEqual([
+      "var(--heat-0)", "var(--blue-1)", "var(--blue-2)", "var(--blue-3)", "var(--blue-4)",
+    ]);
+  });
+  it("un valor desconocido (hex legacy) cae a verde", () => {
+    expect(rampFor("#6b7280")).toEqual(rampFor("green"));
   });
 });
