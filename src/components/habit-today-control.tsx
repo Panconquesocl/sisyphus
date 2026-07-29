@@ -3,7 +3,7 @@
 import { toggleEntry, setEntry } from "@/app/actions";
 import { useLocalToday } from "@/lib/use-local-today";
 import type { HabitType } from "@/lib/grid";
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 
 export function HabitTodayControl({
   habitId,
@@ -17,19 +17,24 @@ export function HabitTodayControl({
   entries: [string, number][];
 }) {
   const today = useLocalToday();
-  const [isPending, startTransition] = useTransition();
+  const [  , startTransition] = useTransition();
+  const serverValue = today ? new Map(entries).get(today) ?? 0 : 0;
+  const [value, setOptimistic] = useOptimistic(serverValue);
+  const disabled = today === null;
 
-  // Valor de HOY (0 si no hay entrada). `today` es null en SSR/hidratación.
-  const value = today ? new Map(entries).get(today) ?? 0 : 0;
-  const ready = today !== null && !isPending;
 
   if (type === "BINARY") {
     const done = value > 0;
     return (
       <button
         type="button"
-        disabled={!ready}
-        onClick={() => today && startTransition(() => toggleEntry(habitId, today))}
+        disabled={disabled}
+        onClick={() =>
+          today && startTransition(async () => {
+            setOptimistic(value > 0 ? 0 : 1);
+            await toggleEntry(habitId, today);
+      })
+    }
         aria-label={done ? "Marcado hoy" : "Marcar hoy"}
         className={`grid size-7 place-items-center rounded-full border text-sm transition-colors disabled:opacity-50 ${
           done
@@ -43,15 +48,20 @@ export function HabitTodayControl({
   }
 
   // Cantidad / Duración → stepper
-  const change = (delta: number) =>
-    today && startTransition(() => setEntry(habitId, today, Math.max(0, value + delta)));
-
+  const commit = (next: number) => {
+    if (!today) return;
+    const clamped = Math.max(0, next);
+    startTransition(async () => {
+      setOptimistic(clamped);
+      await setEntry(habitId, today, clamped);
+    });
+  };
   return (
     <div className="inline-flex items-center gap-2 rounded-full border p-0.5 text-sm">
       <button
         type="button"
-        disabled={!ready || value <= 0}
-        onClick={() => change(-1)}
+        disabled={disabled || value <= 0}
+       onClick={() => commit(value - 1)}
         aria-label="Restar"
         className="grid size-6 place-items-center rounded-full hover:bg-accent disabled:opacity-40"
       >
@@ -63,8 +73,8 @@ export function HabitTodayControl({
       </span>
       <button
         type="button"
-        disabled={!ready}
-        onClick={() => change(1)}
+        disabled={disabled}
+        onClick={() => commit(value + 1)}
         aria-label="Sumar"
         className="grid size-6 place-items-center rounded-full hover:bg-accent disabled:opacity-40"
       >
