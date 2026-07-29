@@ -35,6 +35,10 @@ const { year } = monthInTimeZone(new Date(), user.timezone);
       <h1 className="mt-4 text-2xl font-bold tracking-tight">Mi {year}</h1>
 
       <div className="mt-8 hidden flex-col gap-8 lg:flex">
+       <section>
+          <h2 className="mb-2 text-sm font-medium">Notas del año</h2>
+          <NotesYearGrid year={year} notesByDate={notesByDate} />
+        </section>
         {habits.map((h) => {
           const valuesByDate = new Map(
             h.entries.map((e) => [e.date.toISOString().slice(0, 10), e.value] as const),
@@ -57,12 +61,11 @@ const { year } = monthInTimeZone(new Date(), user.timezone);
           );
         })}
         {habits.length === 0 && (
-          <p className="text-sm text-muted-foreground">Aún no tienes hábitos.</p>
+          <p className="text-sm text-muted-foreground">
+            Aún no tienes hábitos.{" "}
+            <Link href="/" className="underline hover:text-foreground">Crea el primero</Link>.
+          </p>
         )}
-       <section>
-          <h2 className="mb-2 text-sm font-medium">Notas del año</h2>
-          <NotesYearGrid year={year} notesByDate={notesByDate} />
-        </section>
   
       </div>
         {/* Móvil: lista que lleva a cada detalle */}
