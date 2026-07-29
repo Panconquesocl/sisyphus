@@ -3,14 +3,21 @@
 import { createHabit } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
-export function HabitForm() {
+export function HabitForm({ onSuccess }: { onSuccess?: () => void }) {
   const [type, setType] = useState("BINARY");
+  const [isPending, startTransition] = useTransition();
   const showTarget = type !== "BINARY";
 
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      await createHabit(formData);
+      onSuccess?.();
+    });
+  }
   return (
-    <form action={createHabit} className="flex flex-wrap items-center gap-2">
+    <form action={handleSubmit} className="flex flex-wrap items-center gap-2">
       <Input name="name" placeholder="Ej. Meditar" required className="w-40" />
       <select
         name="type"
@@ -28,7 +35,7 @@ export function HabitForm() {
           <Input name="unit" placeholder="Unidad" className="w-28" />
         </>
       )}
-      <Button type="submit">Crear</Button>
+      <Button type="submit" disabled={isPending}>Crear</Button>
     </form>
   );
 }

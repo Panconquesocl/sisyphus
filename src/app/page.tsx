@@ -1,6 +1,5 @@
 import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { HabitForm } from "@/components/habit-form";
 import { HabitGrid } from "@/components/habit-grid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { HabitCardMenu } from "@/components/habit-card-menu";
 import { DeleteHabitButton } from "@/components/delete-habit-button";
 import { HabitTodayControl } from "@/components/habit-today-control";
+import { NewHabitDialog } from "@/components/new-habit-dialog";
 
 export default async function Home({
   searchParams,
@@ -98,13 +98,6 @@ export default async function Home({
 
         <section className="mb-8">
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Nuevo hábito
-          </h2>
-          <HabitForm />
-        </section>
-
-        <section className="mb-8">
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
             Hoy
           </h2>
           <div className="flex flex-col gap-2">
@@ -141,6 +134,7 @@ export default async function Home({
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
             Tus hábitos
           </h2>
+          <div className="flex items-center gap-2">
           <div className="inline-flex rounded-md border p-0.5 text-xs">
             <Link
               href="/?range=1m"
@@ -160,6 +154,9 @@ export default async function Home({
             >
               3 meses
             </Link>
+          </div>
+          <NewHabitDialog/>
+
           </div>
         </div>
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">

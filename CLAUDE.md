@@ -177,8 +177,20 @@ src/
 ```
 
 Server Actions disponibles en `src/app/actions.ts`: `createHabit`, `updateHabit`,
-`setHabitArchived`, `toggleEntry` (binarios), `setEntry` (valores), `setDayNote`
-(upsert por `userId_date`; contenido vacío borra la fila).
+`setHabitArchived`, `deleteHabit` (hard delete; entries caen por cascade), `toggleEntry`
+(binarios), `setEntry` (valores), `setDayNote` (upsert por `userId_date`; contenido vacío
+borra la fila), `setUserTimezone`.
+
+**Registro rápido "Hoy":** `habit-today-control.tsx` (client) — check ✓/○ para binarios,
+stepper `− valor +` para cantidad/duración; usa `useLocalToday()` + `entries` serializadas,
+llama `toggleEntry`/`setEntry`. Versión simple (botones deshabilitados mientras guarda);
+pendiente hacerla optimista con `useOptimistic` (rama de "fluidez"). El viejo
+`habit-today-toggle.tsx` fue eliminado (lo reemplazó este).
+
+**Nuevo hábito en modal:** `new-habit-dialog.tsx` (Dialog + `HabitForm`), disparado por un
+botón a la derecha del toggle de mes en la fila "Tus hábitos". `HabitForm` recibe `onSuccess?`
+y envuelve `createHabit` en un `useTransition`, cerrando el modal al resolver (si el action
+lanza, el modal queda abierto). Patrón idéntico a `EditHabitDialog`.
 
 **Estado del cliente: derivar, no copiar.** `day-note.tsx` es el ejemplo de referencia —
 guarda en estado solo el borrador del usuario (`draft`, `null` si no ha tocado nada) y deriva
