@@ -14,6 +14,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { HabitCardMenu } from "@/components/habit-card-menu";
 import { DeleteHabitButton } from "@/components/delete-habit-button";
+import { HabitTodayControl } from "@/components/habit-today-control";
 
 export default async function Home({
   searchParams,
@@ -87,6 +88,7 @@ export default async function Home({
             })}
           </p>
         </header>
+
         <section className="mb-8">
         <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
           Nota de hoy
@@ -100,6 +102,39 @@ export default async function Home({
           </h2>
           <HabitForm />
         </section>
+
+        <section className="mb-8">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Hoy
+          </h2>
+          <div className="flex flex-col gap-2">
+            {habits.map((h) => (
+              <div key={h.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
+                <span className="flex-1 text-sm font-medium">
+                  {h.name}
+                  {h.target ? (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      meta {h.target}{h.unit ? ` ${h.unit}` : ""}
+                    </span>
+                  ) : null}
+                </span>
+                <HabitTodayControl
+                  habitId={h.id}
+                  type={h.type}
+                  unit={h.unit}
+                  entries={h.entries.map((e) => [e.date.toISOString().slice(0, 10), e.value])}
+                />
+              </div>
+            ))}
+            {habits.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Crea un hábito para empezar a registrar.
+              </p>
+            )}
+          </div>
+        </section>
+
+        
       
       <section>
           <div className="mb-3 flex items-center justify-between">
