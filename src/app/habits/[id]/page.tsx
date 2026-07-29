@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth-helpers";
 import { dayInTimeZone } from "@/lib/dates";
 import { computeStreak, maxStreak, completionRate } from "@/lib/streaks";
 import { YearGrid } from "@/components/year-grid";
+import { HabitIcon } from "@/components/habit-icon";
 
 export default async function HabitDetail({
   params,
@@ -42,16 +43,17 @@ export default async function HabitDetail({
       <Link href="/" className="text-sm text-muted-foreground hover:underline">
         ← Volver
       </Link>
-
-      <h1 className="mt-4 text-2xl font-bold tracking-tight">
-        {habit.name}
-        {habit.target ? (
-          <span className="ml-2 text-base font-normal text-muted-foreground">
-            meta {habit.target}{habit.unit ? ` ${habit.unit}` : ""}
-          </span>
-        ) : null}
-      </h1>
-
+      <div className="mt-4 flex items-center gap-3">
+        <HabitIcon icon={habit.icon} color={habit.color} className="size-7 shrink-0" />
+        <h1 className="text-2xl font-bold tracking-tight">
+          {habit.name}
+          {habit.target ? (
+            <span className="ml-2 text-base font-normal text-muted-foreground">
+              meta {habit.target}{habit.unit ? ` ${habit.unit}` : ""}
+            </span>
+          ) : null}
+        </h1>
+      </div>
       <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Metric label="Racha actual" value={current.length} />
         <Metric label="Racha máxima" value={max} />
