@@ -39,3 +39,14 @@ export function isValidTimeZone(timeZone: string): boolean {
     return false;
   }
 }
+
+/**
+ * Resta n meses a una fecha "YYYY-MM-DD" (matemática UTC).
+ * Nota: en días 29-31, si el mes destino es más corto, JS ajusta al mes siguiente
+ * (ej. 31-jul − 1 mes → 01-jul). Aceptable para una ventana visual.
+ */
+export function subMonths(iso: string, n: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() - n);
+  return d.toISOString().slice(0, 10);
+}

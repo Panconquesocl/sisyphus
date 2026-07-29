@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildYearGrid, yearMonthLabels } from "./grid";
-
+import { buildRangeGrid } from "./grid";
 
 describe("buildYearGrid", () => {
   const cells2026 = buildYearGrid(2026, new Map());
@@ -40,5 +40,19 @@ describe("yearMonthLabels", () => {
     expect(labels.filter((l) => l !== null)).toEqual(
       ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"],
     );
+  });
+});
+describe("buildRangeGrid", () => {
+  const cells = buildRangeGrid("2026-05-01", "2026-05-31", new Map());
+
+  it("cuadra a semanas completas", () => {
+    expect(cells.length % 7).toBe(0);
+  });
+
+  it("va del primer al último día del rango, inclusive", () => {
+    const reales = cells.filter((c) => c !== null);
+    expect(reales[0]!.date).toBe("2026-05-01");
+    expect(reales.at(-1)!.date).toBe("2026-05-31");
+    expect(reales).toHaveLength(31);
   });
 });

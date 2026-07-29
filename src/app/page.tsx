@@ -1,20 +1,25 @@
-import { auth, signIn, signOut } from "@/auth";
+import { auth, signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { HabitForm } from "@/components/habit-form";
 import { HabitTodayToggle } from "@/components/habit-today-toggle";
 import { HabitGrid } from "@/components/habit-grid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { StreakBadge } from "@/components/streak-badge";
 import { ArchiveButton } from "@/components/archive-button";
 import { EditHabitDialog } from "@/components/edit-habit-dialog";
 import { DayNote } from "@/components/day-note";
 import { requireUser } from "@/lib/auth-helpers";
-import { monthInTimeZone } from "@/lib/dates";
 import { TimezoneSync } from "@/components/timezone-sync";
+import { dayInTimeZone, subMonths } from "@/lib/dates";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}){
   const session = await auth();
 
   if (!session?.user) {
@@ -42,16 +47,18 @@ export default async function Home() {
     orderBy: { archivedAt: "desc" },
   });
 
-  const now = new Date();
+ // Ventana móvil que termina HOY (del usuario). "3m" = 3 meses atrás, si no 1.
+  const { range } = await searchParams;
+  const months = range === "3m" ? 3 : 1;
 
-  // El mes de la grilla es el del USUARIO, no el del servidor.
-  const { year, month } = monthInTimeZone(now, user.timezone);
+  const today = dayInTimeZone(new Date(), user.timezone); // "2026-07-20"
+  const startDate = subMonths(today, months);
 
   // La ventana de notas se mantiene en UTC a propósito: cubre los 3 días
   // posibles y el cliente elige el suyo con useLocalToday().
   const DAY_MS = 86_400_000;
+  const now = new Date();
   const utcToday = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-
   const dayNotes = await prisma.dayNote.findMany({
     where: {
       userId: user.id,
@@ -90,9 +97,31 @@ export default async function Home() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Tus hábitos
-        </h2>
+          <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Tus hábitos
+          </h2>
+          <div className="inline-flex rounded-md border p-0.5 text-xs">
+            <Link
+              href="/?range=1m"
+              className={cn(
+                "rounded px-2 py-1",
+                months === 1 ? "bg-muted font-medium" : "text-muted-foreground",
+              )}
+            >
+              1 mes
+            </Link>
+            <Link
+              href="/?range=3m"
+              className={cn(
+                "rounded px-2 py-1",
+                months === 3 ? "bg-muted font-medium" : "text-muted-foreground",
+              )}
+            >
+              3 meses
+            </Link>
+          </div>
+        </div>
         <div className="flex flex-col gap-4">
           {habits.map((h) => {
             const valuesByDate = new Map(
@@ -124,8 +153,8 @@ export default async function Home() {
                 </div>
                  <HabitGrid
                   habitId={h.id}
-                  year={year}
-                  month={month}
+                  startDate={startDate}
+                  endDate={today}
                   type={h.type}
                   target={h.target}
                   unit={h.unit}

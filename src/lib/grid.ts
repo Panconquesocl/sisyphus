@@ -96,3 +96,25 @@ export function yearMonthLabels(cells: DayCell[]): (string | null)[] {
   }
   return labels;
 }
+
+export function buildRangeGrid(
+  startISO: string,
+  endISO: string,
+  valuesByDate: Map<string, number>,
+): DayCell[] {
+  const cells: DayCell[] = [];
+  const start = new Date(`${startISO}T00:00:00Z`);
+  const end = new Date(`${endISO}T00:00:00Z`);
+
+  const firstWeekday = (start.getUTCDay() + 6) % 7; // lunes = 0
+  for (let i = 0; i < firstWeekday; i++) cells.push(null);
+
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    const date = iso(cursor.getUTCFullYear(), cursor.getUTCMonth(), cursor.getUTCDate());
+    cells.push({ date, value: valuesByDate.get(date) ?? null });
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+}
