@@ -1,7 +1,6 @@
-import { auth, signIn } from "@/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { HabitGrid } from "@/components/habit-grid";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StreakBadge } from "@/components/streak-badge";
 import { ArchiveButton } from "@/components/archive-button";
@@ -15,6 +14,7 @@ import { HabitCardMenu } from "@/components/habit-card-menu";
 import { DeleteHabitButton } from "@/components/delete-habit-button";
 import { HabitTodayControl } from "@/components/habit-today-control";
 import { NewHabitDialog } from "@/components/new-habit-dialog";
+import { LoginScreen } from "@/components/login-screen";
 
 export default async function Home({
   searchParams,
@@ -24,16 +24,7 @@ export default async function Home({
   const session = await auth();
 
   if (!session?.user) {
-    return (
-      
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 p-10 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Sisyphus</h1>
-        <p className="text-muted-foreground">Empuja la piedra un día más.</p>
-        <form action={async () => { "use server"; await signIn("google"); }}>
-          <Button type="submit">Entrar con Google</Button>
-        </form>
-      </main>
-    );
+    return <LoginScreen />;
   }
   const user = await requireUser();
 
