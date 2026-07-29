@@ -13,6 +13,7 @@ import { dayInTimeZone, subMonths } from "@/lib/dates";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { HabitCardMenu } from "@/components/habit-card-menu";
+import { DeleteHabitButton } from "@/components/delete-habit-button";
 
 export default async function Home({
   searchParams,
@@ -171,11 +172,12 @@ export default async function Home({
           </h2>
           <div className="flex flex-col gap-2">
             {archivedHabits.map((h) => (
-              <div
+                <div
                 key={h.id}
                 className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm text-muted-foreground">
                 <span className="flex-1">{h.name}</span>
                 <ArchiveButton habitId={h.id} archived={true} />
+                <DeleteHabitButton habitId={h.id} name={h.name} />
               </div>
             ))}
           </div>

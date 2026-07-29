@@ -213,3 +213,16 @@ export async function setUserTimezone(timeZone: string) {
 
   revalidatePath("/");
 }
+
+export async function deleteHabit(habitId: string) {
+  const user = await requireUser();
+
+  const habit = await prisma.habit.findFirst({
+    where: { id: habitId, userId: user.id },
+  });
+  if (!habit) throw new Error("Hábito no encontrado");
+
+  await prisma.habit.delete({ where: { id: habitId } });
+
+  revalidatePath("/");
+}
