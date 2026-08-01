@@ -63,7 +63,7 @@ export default async function Home({
       <main
       className={cn(
         "mx-auto w-full p-6 md:p-10",
-        months === 3 ? "max-w-[616px]" : "max-w-[832px]",
+        months === 3 ? "max-w-[738px]" : "max-w-[828px]",
       )}
       >
       <TimezoneSync stored={user.timezone} />
@@ -164,7 +164,7 @@ export default async function Home({
             <NewHabitDialog />
           </div>
         ) : (
-          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
+         <div className={cn( "grid gap-4", months === 3 ? " xl:grid-cols-2" : "[grid-template-columns:repeat(auto-fill,minmax(200px,1fr))]",)}>
             {habits.map((h) => {
               const valuesByDate = new Map(
                 h.entries.map((e) => [e.date.toISOString().slice(0, 10), e.value] as const),
@@ -176,7 +176,9 @@ export default async function Home({
                   <span className="flex flex-1 items-center gap-2 font-medium">
                     <HabitIcon icon={h.icon} color={h.color} className="size-4 shrink-0" />
                     <span>
-                      {h.name}
+                      <Link href={`/habits/${h.id}`} className="hover:underline">
+                        {h.name}
+                    </Link>
                       {h.target ? (
                         <span className="ml-2 text-sm text-muted-foreground">
                           meta {h.target}{h.unit ? ` ${h.unit}` : ""}
@@ -195,16 +197,18 @@ export default async function Home({
                       icon={h.icon}
                     />
                   </div>
-                  <HabitGrid
-                    habitId={h.id}
-                    startDate={startDate}
-                    endDate={today}
-                    type={h.type}
-                    target={h.target}
-                    unit={h.unit}
-                    valuesByDate={valuesByDate}
-                    color={h.color}
-                  />
+                  <div className={cn(months === 1 ? "mx-auto" : "")}>
+                    <HabitGrid
+                      habitId={h.id}
+                      startDate={startDate}
+                      endDate={today}
+                      type={h.type}
+                      target={h.target}
+                      unit={h.unit}
+                      valuesByDate={valuesByDate}
+                      color={h.color}
+                    />
+                  </div>
                 </Card>
               );
             })}

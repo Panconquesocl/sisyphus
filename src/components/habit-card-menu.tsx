@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EditHabitDialog } from "@/components/edit-habit-dialog";
 import type { HabitType } from "@/lib/grid";
+import { cn } from "@/lib/utils";
 
 export function HabitCardMenu({
   habitId, name, type, target, unit, color, icon,
@@ -32,7 +33,7 @@ export function HabitCardMenu({
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label="Acciones"
-          className={buttonVariants({ variant: "ghost", size: "icon" })}
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "justify-end")}
         >
           <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>

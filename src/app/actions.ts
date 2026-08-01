@@ -85,7 +85,6 @@ export async function toggleEntry(habitId: string, date: string) {
     await prisma.habitEntry.create({ data: { habitId, date: day, value: 1 } });
   }
 
-  revalidatePath("/");
 }
 
 const SetEntrySchema = z.object({
@@ -115,8 +114,6 @@ export async function setEntry(habitId: string, date: string, value: number) {
       update: { value: v },
     });
   }
-
-  revalidatePath("/");
 }
 
 export async function setHabitArchived(habitId: string, archived: boolean) {
