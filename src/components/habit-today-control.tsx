@@ -4,6 +4,8 @@ import { toggleEntry, setEntry } from "@/app/actions";
 import { useLocalToday } from "@/lib/use-local-today";
 import type { HabitType } from "@/lib/grid";
 import { useOptimistic, useTransition } from "react";
+import { useRouter } from "next/navigation";
+
 
 export function HabitTodayControl({
   habitId,
@@ -21,6 +23,7 @@ export function HabitTodayControl({
   const serverValue = today ? new Map(entries).get(today) ?? 0 : 0;
   const [value, setOptimistic] = useOptimistic(serverValue);
   const disabled = today === null;
+  const router = useRouter();
 
 
   if (type === "BINARY") {
@@ -33,6 +36,7 @@ export function HabitTodayControl({
           today && startTransition(async () => {
             setOptimistic(value > 0 ? 0 : 1);
             await toggleEntry(habitId, today);
+            router.refresh();
       })
     }
         aria-label={done ? "Marcado hoy" : "Marcar hoy"}
@@ -54,6 +58,7 @@ export function HabitTodayControl({
     startTransition(async () => {
       setOptimistic(clamped);
       await setEntry(habitId, today, clamped);
+      router.refresh();
     });
   };
   return (

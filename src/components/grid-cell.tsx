@@ -5,7 +5,8 @@ import { intensityLevel, type HabitType } from "@/lib/grid";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 type Props = {
   habitId: string;
@@ -15,16 +16,19 @@ type Props = {
   target: number | null;
   unit: string | null;
   ramp: string[];
+  size: number;
 };
 
-export function GridCell({ habitId, date, value, type, target, unit, ramp }: Props) {
+
+export function GridCell({ habitId, date, value, type, target, unit, ramp , size}: Props) {
   const level = intensityLevel(value, type, target);
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-
-    const cellStyle = { backgroundColor: ramp[level], opacity: isPending ? 0.5 : 1 };
+  
+  const router = useRouter();
+  const cellStyle = { backgroundColor: ramp[level], opacity: isPending ? 0.5 : 1, width: size, height: size };
   const title = value ? `${date}: ${value}${unit ? " " + unit : ""}` : date;
-
+  
   // Binario: click directo, sin popover
   if (type === "BINARY") {
     return (
@@ -33,8 +37,11 @@ export function GridCell({ habitId, date, value, type, target, unit, ramp }: Pro
         title={title}
         aria-label={title}
         disabled={isPending}
-        onClick={() => startTransition(() => toggleEntry(habitId, date))}
-        className="size-3.5 cursor-pointer rounded-[3px]"
+        onClick={() =>
+          startTransition(async () => {
+            await toggleEntry(habitId, date);
+            router.refresh(); })}
+        className={`cursor-pointer rounded-[3px]`}
         style={cellStyle}
       />
     );
@@ -47,7 +54,7 @@ export function GridCell({ habitId, date, value, type, target, unit, ramp }: Pro
         type="button"
         title={title}
         aria-label={title}
-        className="size-3.5 cursor-pointer rounded-[3px]"
+        className={`cursor-pointer rounded-[3px]`}
         style={cellStyle}
       />
       <PopoverContent align="start" className="w-52">
@@ -78,11 +85,20 @@ function ValueEditor({
 }) {
   const [val, setVal] = useState(value ? String(value) : "");
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+useEffect(() => {
+  inputRef.current?.focus({ preventScroll: true });
+}, []);
+
 
   function commit(n: number) {
-    startTransition(() => setEntry(habitId, date, n));
-    onDone();
-  }
+  onDone();                       // cierra el popover ya
+  startTransition(async () => {
+    await setEntry(habitId, date, n);
+    router.refresh();
+  });
+}
 
   function save() {
     const n = val.trim() === "" ? 0 : Number(val);
@@ -95,12 +111,12 @@ function ValueEditor({
       <p className="text-sm font-medium">{date}</p>
       <div className="flex items-center gap-2">
         <Input
-          type="number"
-          min="0"
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          autoFocus
-          className="h-8"
+        ref={inputRef}
+        type="number"
+        min="0"
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        className="h-8"
         />
         {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
       </div>
